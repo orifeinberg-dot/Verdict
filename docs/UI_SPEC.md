@@ -2,24 +2,66 @@
 
 ## Design philosophy
 
-Apple-inspired means restraint, not decoration: generous whitespace, a single
-accent color used sparingly, calm typography, and motion that clarifies state
-changes rather than performing. The product covers four screens. If a design
-idea doesn't make the verdict clearer or the flow faster, cut it.
+Swiss minimalism, not Apple-inspired: a predominantly monochrome canvas —
+generous whitespace, calm typography, and motion that clarifies state
+changes rather than performing — with one fluorescent brand accent used
+sparingly and deliberately to create emphasis, never decoration. The
+product covers four screens. If a design idea doesn't make the verdict
+clearer or the flow faster, cut it.
 
 Concretely:
 - One neutral base (near-white / near-black background depending on system
-  theme), one text-ink color, one accent color reserved for primary actions.
-- Verdict color-coding is the only place color carries meaning beyond the
-  strength/weakness distinction below: green = Launch, amber = Test,
-  red = Don't Launch. Used consistently for the verdict badge and nothing
-  else — it does not bleed into unrelated UI chrome.
+  theme), one text-ink color, one brand accent — Electric Lime — reserved
+  for primary actions and interactive emphasis. See "Brand identity" below.
+- Verdict color-coding is the only other place color carries meaning: green
+  = Launch, amber = Test, red = Don't Launch. This system is deliberately
+  independent from the brand accent (see "Brand identity" for how the two
+  are kept from colliding) and is used consistently for the verdict badge
+  and nothing else — it does not bleed into unrelated UI chrome.
 - Large, deliberate type for the verdict headline; everything else is quiet
   and secondary.
 - System font stack (`-apple-system`/San Francisco fallback chain), no
   decorative fonts.
 - Light and dark mode both supported from day one via `prefers-color-scheme`
-  — trivial to do with Tailwind, not worth skipping.
+  — trivial to do with Tailwind, not worth skipping. The monochrome base
+  swaps between schemes; Electric Lime does not (see below).
+
+## Brand identity
+
+**Electric Lime** (`#C6FF00`) is Verdict's only brand accent. It exists to
+make specific interactive moments feel intentional, not to decorate the
+interface. The interface otherwise stays monochrome — white, black, and
+grayscale — so that when lime appears, it reads as a deliberate signal.
+
+Use it for:
+- Primary CTA buttons
+- Interactive focus states
+- Active navigation states
+- Progress indicators and loading animations
+- Small UI highlights on interactive elements that require emphasis
+
+Don't use it for:
+- Large fills or background areas — it's an accent, not a surface color
+- Body text, or any text set directly on a light background — at this
+  luminance it fails contrast as text. Use it as a fill or stroke instead,
+  with black or near-black label text on top (e.g. a lime CTA button gets a
+  black label, not a white one)
+- Decorative flourishes with no interactive meaning
+- Anything in the Verdict status system below — the two color systems must
+  stay visually distinct from each other
+
+**Color scheme behavior:** Electric Lime stays constant across light and
+dark mode — only the monochrome base (background / text-ink) swaps via
+`prefers-color-scheme`. A single fixed fluorescent value reads correctly
+against both a near-white and a near-black surface without needing a
+variant.
+
+**Staying distinct from Verdict status colors:** "Launch" green must read
+as clearly different from Electric Lime — a saturated, blue-leaning green,
+not a yellow-leaning one — so that a lime CTA sitting near a green Launch
+badge never looks like the same color family. This is what keeps the
+brand-accent system and the status system independent in practice, not
+just in principle.
 
 ## Screens
 
@@ -81,8 +123,9 @@ route, after "Analyze" is pressed):
 
 - The form cross-fades out; the uploaded creative's thumbnail (scaled up,
   centered) becomes the focal point, with a premium animated loading
-  treatment — not a generic spinner. A soft pulsing glow or slow gradient
-  sweep around the image edge reads as "considered" rather than "waiting."
+  treatment — not a generic spinner. A soft pulsing glow and a slow scan
+  sweep around the image edge, in Electric Lime per "Brand identity" above,
+  reads as "considered" rather than "waiting."
 - Rotates through short, specific status lines that build anticipation and
   communicate real evaluation stages (e.g. "Reading the creative…",
   "Checking policy risk…", "Weighing brand fit…", "Finalizing verdict…").
