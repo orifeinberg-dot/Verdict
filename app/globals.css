@@ -27,3 +27,53 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+@keyframes verdict-fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes verdict-scan {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes verdict-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.animate-verdict-fade-slide {
+  animation: verdict-fade-slide 0.4s ease-out;
+}
+
+.animate-verdict-scan {
+  animation: verdict-scan 2.4s ease-in-out infinite;
+}
+
+.animate-verdict-glow {
+  animation: verdict-glow 2.6s ease-in-out infinite;
+}

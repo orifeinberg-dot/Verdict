@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { validateImageFile } from "@/lib/validation";
 
 const CAMPAIGN_OBJECTIVES = [
@@ -11,17 +12,49 @@ const CAMPAIGN_OBJECTIVES = [
   { value: "app_installs", label: "App installs" },
 ];
 
+const ANALYSIS_MESSAGES = [
+  "Reading creative...",
+  "Evaluating hierarchy...",
+  "Reviewing CTA...",
+  "Assessing clarity...",
+  "Preparing Verdict...",
+];
+
+const MESSAGE_INTERVAL_MS = 900;
+const FINAL_MESSAGE_HOLD_MS = 1100;
+
 const fieldInputClass =
   "h-11 w-full rounded-lg border border-foreground/15 bg-transparent px-3.5 text-base text-foreground placeholder:text-foreground/35 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent";
 
 export function AnalyzeWorkspace() {
+  const router = useRouter();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [messageIndex, setMessageIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isAnalyzing) return;
+
+    const isLastMessage = messageIndex === ANALYSIS_MESSAGES.length - 1;
+    const timeout = setTimeout(
+      () => {
+        if (isLastMessage) {
+          router.push("/verdict/demo");
+        } else {
+          setMessageIndex((index) => index + 1);
+        }
+      },
+      isLastMessage ? FINAL_MESSAGE_HOLD_MS : MESSAGE_INTERVAL_MS,
+    );
+
+    return () => clearTimeout(timeout);
+  }, [isAnalyzing, messageIndex, router]);
 
   async function selectFile(file: File | undefined) {
     if (!file) return;
@@ -44,6 +77,17 @@ export function AnalyzeWorkspace() {
     setPreviewUrl(result.previewUrl);
     setFileName(file.name);
     setWarnings(result.warnings);
+  }
+
+  if (isAnalyzing) {
+    return (
+      <main className="flex flex-1 flex-col items-center px-6 py-16 sm:px-12">
+        <AnalysisLoadingState
+          previewUrl={previewUrl}
+          messageIndex={messageIndex}
+        />
+      </main>
+    );
   }
 
   return (
@@ -150,7 +194,11 @@ export function AnalyzeWorkspace() {
 
         {previewUrl && (
           <form
-            onSubmit={(event) => event.preventDefault()}
+            onSubmit={(event) => {
+              event.preventDefault();
+              setMessageIndex(0);
+              setIsAnalyzing(true);
+            }}
             className="flex flex-col gap-5"
           >
             <Field label="Brand">
@@ -210,6 +258,52 @@ export function AnalyzeWorkspace() {
         )}
       </div>
     </main>
+  );
+}
+
+function AnalysisLoadingState({
+  previewUrl,
+  messageIndex,
+}: {
+  previewUrl: string | null;
+  messageIndex: number;
+}) {
+  return (
+    <div className="flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-10 py-16 text-center">
+      <div className="relative flex h-56 w-56 items-center justify-center">
+        <div className="absolute inset-0 rounded-3xl bg-accent/20 blur-2xl animate-verdict-glow" />
+        <div className="relative h-full w-full overflow-hidden rounded-3xl border border-foreground/10 bg-foreground/[0.03] shadow-sm">
+          {previewUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={previewUrl}
+              alt=""
+              className="h-full w-full object-cover opacity-80"
+            />
+          )}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent to-transparent animate-verdict-scan" />
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center gap-4">
+        <p
+          key={messageIndex}
+          className="text-lg font-medium text-foreground animate-verdict-fade-slide"
+        >
+          {ANALYSIS_MESSAGES[messageIndex]}
+        </p>
+        <div className="flex gap-1.5">
+          {ANALYSIS_MESSAGES.map((message, index) => (
+            <span
+              key={message}
+              className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
+                index <= messageIndex ? "bg-accent" : "bg-foreground/15"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
