@@ -134,7 +134,7 @@ export function AnalyzeWorkspace() {
               setIsDraggingOver(false);
               selectFile(event.dataTransfer.files?.[0]);
             }}
-            className={`group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
+            className={`group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
               error
                 ? "border-red-300 bg-red-50/50 dark:border-red-900/60 dark:bg-red-950/20"
                 : isDraggingOver
@@ -250,7 +250,7 @@ export function AnalyzeWorkspace() {
 
             <button
               type="submit"
-              className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-full bg-accent text-base font-medium text-white transition-opacity hover:opacity-90"
+              className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-full bg-accent text-base font-medium text-accent-ink transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               Analyze
             </button>

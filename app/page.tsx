@@ -12,7 +12,7 @@ export default function Home() {
         </p>
         <Link
           href="/analyze"
-          className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-accent px-8 text-base font-medium text-white transition-opacity hover:opacity-90"
+          className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-accent px-8 text-base font-medium text-accent-ink transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           Analyze a Creative
         </Link>
