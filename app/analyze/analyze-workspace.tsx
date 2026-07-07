@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { validateImageFile } from "@/lib/validation";
 
 const CAMPAIGN_OBJECTIVES = [
   { value: "awareness", label: "Awareness" },
@@ -17,12 +18,32 @@ export function AnalyzeWorkspace() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function selectFile(file: File | undefined) {
+  async function selectFile(file: File | undefined) {
     if (!file) return;
-    setPreviewUrl(URL.createObjectURL(file));
+
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setFileName(null);
+    setError(null);
+    setWarnings([]);
+    setIsValidating(true);
+
+    const result = await validateImageFile(file);
+    setIsValidating(false);
+
+    if (result.status === "error") {
+      setError(result.message);
+      return;
+    }
+
+    setPreviewUrl(result.previewUrl);
     setFileName(file.name);
+    setWarnings(result.warnings);
   }
 
   return (
@@ -44,68 +65,86 @@ export function AnalyzeWorkspace() {
           </p>
         </div>
 
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => fileInputRef.current?.click()}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
+        <div className="flex flex-col gap-3">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            onDragEnter={(event) => {
               event.preventDefault();
-              fileInputRef.current?.click();
-            }
-          }}
-          onDragEnter={(event) => {
-            event.preventDefault();
-            setIsDraggingOver(true);
-          }}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setIsDraggingOver(true);
-          }}
-          onDragLeave={() => setIsDraggingOver(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setIsDraggingOver(false);
-            selectFile(event.dataTransfer.files?.[0]);
-          }}
-          className={`group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
-            isDraggingOver
-              ? "border-accent bg-accent/5"
-              : "border-foreground/15 bg-foreground/[0.03] hover:border-accent/50 hover:bg-accent/[0.03]"
-          }`}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) => selectFile(event.target.files?.[0])}
-          />
-          {previewUrl ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewUrl}
-                alt="Selected creative preview"
-                className="max-h-56 rounded-lg object-contain shadow-sm"
-              />
-              <span className="text-sm text-foreground/60">
-                {fileName} · click to replace
-              </span>
-            </>
-          ) : (
-            <>
-              <UploadIcon className="h-9 w-9 text-foreground/40" />
-              <div className="flex flex-col gap-1">
-                <span className="font-medium">
-                  Drop your creative here, or click to browse
-                </span>
-                <span className="text-sm text-foreground/50">
-                  JPG, PNG, or WEBP
-                </span>
+              setIsDraggingOver(true);
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setIsDraggingOver(true);
+            }}
+            onDragLeave={() => setIsDraggingOver(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setIsDraggingOver(false);
+              selectFile(event.dataTransfer.files?.[0]);
+            }}
+            className={`group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
+              error
+                ? "border-red-300 bg-red-50/50 dark:border-red-900/60 dark:bg-red-950/20"
+                : isDraggingOver
+                  ? "border-accent bg-accent/5"
+                  : "border-foreground/15 bg-foreground/[0.03] hover:border-accent/50 hover:bg-accent/[0.03]"
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onClick={(event) => event.stopPropagation()}
+              onChange={(event) => selectFile(event.target.files?.[0])}
+            />
+            {isValidating ? (
+              <div className="flex flex-col items-center gap-3 text-foreground/50">
+                <UploadIcon className="h-9 w-9 animate-pulse" />
+                <span className="font-medium">Checking image…</span>
               </div>
-            </>
+            ) : previewUrl ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewUrl}
+                  alt="Selected creative preview"
+                  className="max-h-56 rounded-lg object-contain shadow-sm"
+                />
+                <div className="flex items-center gap-1.5 text-sm text-foreground/60">
+                  <CheckCircleIcon className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+                  <span>{fileName}</span>
+                  <span className="text-foreground/40">· click to replace</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <UploadIcon
+                  className={`h-9 w-9 ${error ? "text-red-400 dark:text-red-500/70" : "text-foreground/40"}`}
+                />
+                <div className="flex flex-col gap-1">
+                  <span className="font-medium">
+                    Drop your creative here, or click to browse
+                  </span>
+                  <span className="text-sm text-foreground/50">
+                    JPG, PNG, or WEBP, up to 10MB
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {error && <StatusBanner variant="error" messages={[error]} />}
+          {!error && warnings.length > 0 && (
+            <StatusBanner variant="warning" messages={warnings} />
           )}
         </div>
 
@@ -216,6 +255,46 @@ function UploadIcon({ className }: { className?: string }) {
   );
 }
 
+const STATUS_BANNER_STYLES = {
+  error: {
+    container:
+      "border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300",
+    icon: "text-red-500 dark:text-red-400",
+    Icon: AlertCircleIcon,
+    role: "alert" as const,
+  },
+  warning: {
+    container:
+      "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300",
+    icon: "text-amber-500 dark:text-amber-400",
+    Icon: AlertTriangleIcon,
+    role: "status" as const,
+  },
+};
+
+function StatusBanner({
+  variant,
+  messages,
+}: {
+  variant: "error" | "warning";
+  messages: string[];
+}) {
+  const { container, icon, Icon, role } = STATUS_BANNER_STYLES[variant];
+  return (
+    <div
+      role={role}
+      className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 text-sm ${container}`}
+    >
+      <Icon className={`h-5 w-5 shrink-0 ${icon}`} />
+      <div className="flex flex-col gap-1 text-left">
+        {messages.map((message) => (
+          <p key={message}>{message}</p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ChevronIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -229,6 +308,62 @@ function ChevronIcon({ className }: { className?: string }) {
       aria-hidden="true"
     >
       <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+function AlertCircleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v5" />
+      <path d="M12 16h.01" />
+    </svg>
+  );
+}
+
+function AlertTriangleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M10.29 3.86 1.82 18a1 1 0 0 0 .86 1.5h18.64a1 1 0 0 0 .86-1.5L13.71 3.86a1 1 0 0 0-1.72 0Z" />
+      <path d="M12 9v4" />
+      <path d="M12 16.5h.01" />
+    </svg>
+  );
+}
+
+function CheckCircleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8.5 12.5 2.5 2.5 4.5-5" />
     </svg>
   );
 }
