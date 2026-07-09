@@ -68,17 +68,17 @@ export function VerdictReport({ report, activeId, onHover, onSelect }: Props) {
       />
       <RecommendationsList items={report.recommendations} />
 
-      <div className="flex flex-col gap-3 border-t border-foreground/10 pt-6 sm:flex-row">
+      <div className="flex flex-col gap-4 border-t border-foreground/10 pt-6 md:flex-row md:gap-3">
         <Link
           href="/analyze"
-          className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-accent px-6 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="inline-flex h-14 items-center justify-center rounded-full bg-accent px-6 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-11 md:flex-1"
         >
           Analyze another creative
         </Link>
         <button
           type="button"
           onClick={handleCopy}
-          className="inline-flex h-11 flex-1 items-center justify-center rounded-full border border-foreground/15 px-6 text-sm font-medium text-foreground transition-colors hover:border-foreground/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="inline-flex h-14 items-center justify-center rounded-full border border-foreground/15 px-6 text-sm font-medium text-foreground transition-colors hover:border-foreground/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-11 md:flex-1"
         >
           {copied ? "Copied!" : "Copy summary"}
         </button>
