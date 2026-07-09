@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { validateImageFile } from "@/lib/validation";
+import { submitCreative } from "@/app/actions/submit-creative";
+import { reportStore } from "@/lib/report-store";
+import type { CreativeContext, CreativeImage } from "@/lib/verdict/types";
 
 const CAMPAIGN_OBJECTIVES = [
   { value: "awareness", label: "Awareness" },
@@ -36,19 +39,46 @@ export function AnalyzeWorkspace() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [messageIndex, setMessageIndex] = useState(0);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectedFileRef = useRef<File | null>(null);
+  const imageDimensionsRef = useRef<{ width: number; height: number } | null>(
+    null,
+  );
+  const pendingSubmissionRef = useRef<{
+    promise: ReturnType<typeof submitCreative>;
+    image: CreativeImage;
+    context: CreativeContext;
+  } | null>(null);
 
   useEffect(() => {
     if (!isAnalyzing) return;
 
     const isLastMessage = messageIndex === ANALYSIS_MESSAGES.length - 1;
     const timeout = setTimeout(
-      () => {
-        if (isLastMessage) {
-          router.push("/verdict/demo");
-        } else {
+      async () => {
+        if (!isLastMessage) {
           setMessageIndex((index) => index + 1);
+          return;
         }
+
+        const pending = pendingSubmissionRef.current;
+        if (!pending) return;
+
+        const result = await pending.promise;
+
+        if (result.status === "error") {
+          setIsAnalyzing(false);
+          setSubmitError(result.message);
+          return;
+        }
+
+        const id = reportStore.save({
+          report: result.report,
+          image: pending.image,
+          context: pending.context,
+        });
+        router.push(`/verdict/${id}`);
       },
       isLastMessage ? FINAL_MESSAGE_HOLD_MS : MESSAGE_INTERVAL_MS,
     );
@@ -64,6 +94,9 @@ export function AnalyzeWorkspace() {
     setFileName(null);
     setError(null);
     setWarnings([]);
+    setSubmitError(null);
+    selectedFileRef.current = null;
+    imageDimensionsRef.current = null;
     setIsValidating(true);
 
     const result = await validateImageFile(file);
@@ -77,6 +110,45 @@ export function AnalyzeWorkspace() {
     setPreviewUrl(result.previewUrl);
     setFileName(file.name);
     setWarnings(result.warnings);
+    selectedFileRef.current = file;
+    imageDimensionsRef.current = { width: result.width, height: result.height };
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const file = selectedFileRef.current;
+    const dimensions = imageDimensionsRef.current;
+    if (!file || !dimensions) return;
+
+    const formData = new FormData(event.currentTarget);
+    const context: CreativeContext = {
+      brandName: String(formData.get("brandName") ?? "").trim(),
+      website: String(formData.get("website") ?? "").trim(),
+      industry: String(formData.get("industry") ?? "").trim(),
+      campaignObjective: String(
+        formData.get("campaignObjective") ?? "",
+      ) as CreativeContext["campaignObjective"],
+      targetAudience:
+        String(formData.get("targetAudience") ?? "").trim() || undefined,
+    };
+
+    setSubmitError(null);
+    setMessageIndex(0);
+    setIsAnalyzing(true);
+
+    const dataUrl = await fileToDataUrl(file);
+    const image: CreativeImage = {
+      dataUrl,
+      width: dimensions.width,
+      height: dimensions.height,
+    };
+
+    pendingSubmissionRef.current = {
+      promise: submitCreative(image, context),
+      image,
+      context,
+    };
   }
 
   if (isAnalyzing) {
@@ -193,17 +265,15 @@ export function AnalyzeWorkspace() {
         </div>
 
         {previewUrl && (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              setMessageIndex(0);
-              setIsAnalyzing(true);
-            }}
-            className="flex flex-col gap-5"
-          >
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {submitError && (
+              <StatusBanner variant="error" messages={[submitError]} />
+            )}
             <Field label="Brand">
               <input
                 type="text"
+                name="brandName"
+                required
                 placeholder="e.g. Acme Running Co."
                 className={fieldInputClass}
               />
@@ -211,6 +281,8 @@ export function AnalyzeWorkspace() {
             <Field label="Website">
               <input
                 type="url"
+                name="website"
+                required
                 placeholder="https://..."
                 className={fieldInputClass}
               />
@@ -218,6 +290,8 @@ export function AnalyzeWorkspace() {
             <Field label="Industry">
               <input
                 type="text"
+                name="industry"
+                required
                 placeholder="e.g. Apparel"
                 className={fieldInputClass}
               />
@@ -225,6 +299,8 @@ export function AnalyzeWorkspace() {
             <Field label="Campaign objective">
               <div className="relative">
                 <select
+                  name="campaignObjective"
+                  required
                   defaultValue=""
                   className={`${fieldInputClass} appearance-none pr-9`}
                 >
@@ -243,6 +319,7 @@ export function AnalyzeWorkspace() {
             <Field label="Target audience" hint="optional">
               <input
                 type="text"
+                name="targetAudience"
                 placeholder="e.g. Runners aged 25-40"
                 className={fieldInputClass}
               />
@@ -329,6 +406,15 @@ function Field({
       {children}
     </label>
   );
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 function UploadIcon({ className }: { className?: string }) {
