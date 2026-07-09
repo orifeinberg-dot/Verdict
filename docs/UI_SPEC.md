@@ -63,6 +63,32 @@ badge never looks like the same color family. This is what keeps the
 brand-accent system and the status system independent in practice, not
 just in principle.
 
+**Verdict status color values:** two variants of each color exist, used
+in different contexts:
+
+| Verdict | Text/badge — light mode | Text/badge — dark mode | Marker (fixed, both modes) |
+|---|---|---|---|
+| Launch | `#047857` | `#34D399` | `#10B981` |
+| Test | `#B45309` | `#FBBF24` | `#F59E0B` |
+| Don't Launch | `#B91C1C` | `#F87171` | `#EF4444` |
+
+The text/badge pair swaps with `prefers-color-scheme`, the same way
+`--background`/`--foreground` do (both pairs verified at ≥4.5:1 contrast
+against their respective surface) — these colors sit on the app's own
+monochrome chrome (verdict headline, badge, category tags) and need to
+hold contrast against a near-white or near-black surface, so a single
+fixed value can't serve both. Markers are different: they sit on top of
+the uploaded creative — an arbitrary photographic background, not app
+chrome — so a marker keeps one fixed, more saturated value in both
+themes (paired with the drop shadow specified in "Visual annotation
+design" below for on-image legibility), the same reasoning that keeps
+Electric Lime itself fixed.
+
+"Test" amber sits in the same rough hue family as Electric Lime but stays
+distinct in practice: it's deeper and more orange, reserved strictly for
+a status badge, and never appears on an interactive control — so the two
+never compete for the same read in the same moment.
+
 ## Screens
 
 Four screens, three routes (the loading state is not a route — see
@@ -146,9 +172,15 @@ desktop (image left, report right), stacked on mobile (image first, then
 verdict, then the rest).
 
 - **Verdict badge**: top of the report column, large, colored per the
-  three-way scheme, with the **confidence score** shown as a small
-  secondary element beside or beneath it (e.g. "72% confidence") — visually
-  subordinate to the verdict itself, never competing with it for attention.
+  three-way scheme (see "Verdict status color values" in "Brand identity"
+  above), with the **confidence score** shown as a small secondary element
+  beside or beneath it (e.g. "72% confidence") — visually subordinate to
+  the verdict itself, never competing with it for attention. This is the
+  product's one intentional "reveal" moment: on first render, the badge
+  and its label fade/scale in together — a brief, subtle entrance (under
+  ~400ms, matching the fade-slide treatment already used elsewhere in the
+  product), not a flashy animation — so the verdict reads as the payoff of
+  the analysis that just ran, rather than appearing as static text.
 - **Executive summary**: a few sentences directly beneath the badge, in
   normal-weight text. This is the first thing a user's eye should land on
   after the image and the badge.
@@ -185,12 +217,34 @@ verdict, then the rest).
 This is the product's signature visual element, so it gets specific
 treatment:
 
+- **Data model**: each strength/weakness carries an optional
+  `boundingBox` (`x`, `y`, `width`, `height`, all percentages of image
+  width/height — see `ARCHITECTURE.md`'s `AnnotatedPoint`). The marker
+  renders as a point at the box's center; the hover/focus outline (below)
+  renders the box itself. One data shape drives both the point and the
+  extent, so there's nothing to keep in sync between them.
+- **Scope**: only strengths and weaknesses get hotspots. Recommendations
+  are never annotated on the image — a recommendation is an action, not a
+  location (`PRODUCT_SPEC.md`) — so there is no third marker type or
+  color. If a strength/weakness has no `boundingBox`, it still appears in
+  its list normally, just without a marker or on-image click target.
 - Marker: a small filled circle (~24px), colored by kind (strength vs.
-  weakness, not a three-tier severity scale), positioned at the center of
-  the hotspot, with a subtle drop shadow so it reads on any background.
-- On hover/focus: marker scales up slightly and a thin outline rectangle
-  fades in around the approximate hotspot area, so users see both the point
+  weakness, not a three-tier severity scale) using the fixed marker
+  values from "Verdict status color values" above (`#10B981` strength /
+  `#EF4444` weakness — fixed in both themes, unlike the badge/text pair,
+  because markers sit on top of the uploaded creative's own colors, not
+  the app's chrome), positioned at the center of the hotspot, with a
+  subtle drop shadow so it reads on any background.
+- On hover/focus (desktop): marker scales up slightly and a thin outline
+  rectangle fades in around the bounding box, so users see both the point
   of interest and its rough extent.
+- **Touch (mobile)**: there's no hover, so tap does the work hover+click
+  do together on desktop, in one step — tapping a marker selects it
+  (shows the outline, highlights the matching list row, scrolls the row
+  into view); tapping the same marker or its list row again deselects it;
+  tapping a different marker or row moves the selection. There's no
+  separate "preview on hover" state to design for on touch — selection is
+  just binary and explicit.
 - Markers never obscure the specific detail they're pointing at — offset
   the marker slightly outside the hotspot's corner when the area is small.
 - All marker/hotspot coordinates are expressed as percentages of image

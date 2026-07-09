@@ -12,6 +12,25 @@ Tailwind + React. No new dependencies should be needed for Phase 1 beyond
 a schema validator (e.g. `zod`) — confirm with the user before adding it,
 per project convention.
 
+## Current status (as of this revision)
+
+Only Milestone 4 (landing page) and a cosmetic stand-in for Milestones
+5–6 exist today. `/analyze` has a working upload dropzone, context form,
+and an analyzing-state animation, but it's all one monolithic component
+(`app/analyze/analyze-workspace.tsx`), not yet split per the component
+list below, and submitting the form fakes the wait with a `setTimeout`
+and hard-navigates to a placeholder `/verdict/demo` route with no real
+report data behind it. Milestones 1–3 (types, mock engine, report store,
+Server Action) haven't been started, and Milestone 7 (the real Verdict
+page) doesn't exist.
+
+Practical implication for the next implementation prompt: it needs to
+scope in Milestones 1, 2, 3, and 7 together, plus rewiring `/analyze`'s
+submit handler to call the real Server Action instead of the fake
+timeout. The Verdict page can't render real data without the
+engine/store/action underneath it — "build the Verdict page" alone isn't
+a well-formed unit of work on its own.
+
 ## Milestone 1 — Types and mock engine (no UI)
 
 Build the domain model first so the UI has a real contract to render

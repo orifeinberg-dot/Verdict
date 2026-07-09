@@ -8,6 +8,11 @@ not for scale or extensibility that isn't needed. Every abstraction below
 exists because a concrete, near-term requirement (the mock→real AI swap, or
 the eventual add-a-backend swap) needs it — not speculatively.
 
+See `DEVELOPMENT_PLAN.md`'s "Current status" section for what's actually
+built as of this revision — most of the shape described below (the
+engine, the store, the Server Action, the component split) does not exist
+in the codebase yet.
+
 ## Shape of the system
 
 A single Next.js application, three routes, no separate backend service:
@@ -316,3 +321,32 @@ lib/
 Flat and shallow on purpose. No `services/`, `repositories/`, or `domain/`
 layers — there are exactly two domain-level seams (`VerdictEngine`,
 `ReportStore`), each warranting its own folder and nothing more.
+
+## Verdict page component composition
+
+`app/verdict/[id]/page.tsx` owns the one piece of state the page needs to
+share: which strength/weakness (if any) is currently selected. It's
+lifted here, specifically so `annotated-image.tsx` and
+`verdict-report.tsx` can stay in sync without reaching into each other.
+
+```
+VerdictPage (app/verdict/[id]/page.tsx)
+├── loads StoredReport from ReportStore by id (renders "not available" if null)
+├── selectedPointId: string | null        (lifted state)
+├── AnnotatedImage
+│     - renders image + markers (strengths + weaknesses only)
+│     - marker click/hover/tap -> setSelectedPointId
+│     - selectedPointId prop -> highlights the matching marker
+└── VerdictReport
+      ├── VerdictBadge (verdict + confidence, reveal animation on mount)
+      ├── ExecutiveSummary
+      ├── StrengthsList / WeaknessesList
+      │     - row click/hover/tap -> setSelectedPointId
+      │     - selectedPointId prop -> highlights the matching row
+      ├── RecommendationsList (plain list, no marker linkage)
+      └── Actions ("Analyze another creative", "Copy summary")
+```
+
+`RecommendationsList` deliberately has no wiring to `selectedPointId` —
+per `UI_SPEC.md`, recommendations are never annotated on the image, so
+there's nothing for a recommendation row to synchronize with.

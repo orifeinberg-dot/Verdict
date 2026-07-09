@@ -105,6 +105,28 @@ Each Verdict Report is backed by:
 Strengths and weaknesses both carry a category tag (see below) so the user
 can tell *why* something matters, not just that it does.
 
+### Voice and tone
+
+Every piece of generated text — executive summary, strength/weakness
+explanations, recommendations — should read like a specific, opinionated
+note from a senior growth marketer who actually looked at this creative,
+not generic AI-assistant output. Concretely:
+
+- Plain, direct sentences. No hedging ("might potentially," "it's possible
+  that"), no disclaimers, no "as an AI" framing.
+- Specific to the creative and the stated context, not generic
+  best-practices copy that could apply to any ad — reference what's
+  actually on the image (e.g. "the CTA button blends into the background"
+  beats "make sure your CTA stands out").
+- Short sentences over long ones. The executive summary should read in one
+  breath.
+- Confident, not apologetic — a "Don't Launch" verdict states the blocking
+  issue plainly rather than softening it into a suggestion.
+
+This applies equally to the mock engine's copy templates and, later, the
+system prompt for the OpenAI phase — both are expressions of the same
+voice, not independent copywriting exercises.
+
 ## Categories
 
 Keeping categories few and fixed makes both the mock data and the future
