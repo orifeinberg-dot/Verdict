@@ -3,8 +3,10 @@ import type {
   AnnotationCategory,
   BoundingBox,
   CampaignObjective,
+  CampaignType,
   CreativeContext,
   CreativeImage,
+  Occasion,
   Verdict,
   VerdictEngine,
   VerdictReport,
@@ -140,6 +142,75 @@ const RECOMMENDATION_TEMPLATES: Record<AnnotationCategory, Template[]> = {
   ],
 };
 
+type CampaignSignal = {
+  category: AnnotationCategory;
+  strengthText: Template;
+  weaknessText: Template;
+};
+
+// Strategic-fit findings: how well the creative matches the expectations
+// of its declared Campaign Type/Occasion (e.g. a Sale creative is
+// expected to show a price; an Evergreen one shouldn't lean on fake
+// urgency). Deliberately covers a representative subset of values, not
+// every Campaign Type × Occasion combination — see DEVELOPMENT_PLAN.md.
+// These findings never carry a boundingBox: they're about strategic fit,
+// not a location on the image, so they never get a marker (UI_SPEC.md).
+const CAMPAIGN_TYPE_SIGNALS: Partial<Record<CampaignType, CampaignSignal>> = {
+  sale: {
+    category: "message_clarity",
+    strengthText: () =>
+      "The price or discount is stated clearly, so there's no ambiguity about what's actually on sale.",
+    weaknessText: () =>
+      "There's no visible price or discount callout — for a Sale creative, that's usually the first thing a viewer looks for.",
+  },
+  promotion: {
+    category: "message_clarity",
+    strengthText: () =>
+      "The promotional offer is front and center, with a clear reason to act now.",
+    weaknessText: () =>
+      "The promotion itself isn't obvious from the creative — it reads as a regular ad rather than a limited-time push.",
+  },
+  product_launch: {
+    category: "message_clarity",
+    strengthText: () =>
+      "What's new and different about this product comes through clearly, not just that it exists.",
+    weaknessText: () =>
+      "It's not clear what's new here versus an existing product — a launch creative needs to earn that distinction visually.",
+  },
+  evergreen: {
+    category: "message_clarity",
+    strengthText: () =>
+      "The tone stays steady and confident without leaning on artificial urgency, which fits an always-on placement.",
+    weaknessText: () =>
+      "Urgency language (\"today only\", countdown framing) sits oddly on an evergreen creative meant to run indefinitely.",
+  },
+};
+
+const OCCASION_SIGNALS: Partial<Record<Occasion, CampaignSignal>> = {
+  black_friday: {
+    category: "message_clarity",
+    strengthText: () => "Urgency and the Black Friday offer are unmistakable at a glance.",
+    weaknessText: () =>
+      "This doesn't read as a Black Friday creative — there's no urgency or event-specific offer visible.",
+  },
+};
+
+function buildCampaignSignalPoint(
+  rng: Rng,
+  ctx: CreativeContext,
+  signal: CampaignSignal,
+): { isStrength: boolean; point: AnnotatedPoint } {
+  const isStrength = rng() > 0.5;
+  return {
+    isStrength,
+    point: {
+      id: crypto.randomUUID(),
+      category: signal.category,
+      summary: isStrength ? signal.strengthText(ctx) : signal.weaknessText(ctx),
+    },
+  };
+}
+
 function buildPoint(
   rng: Rng,
   category: AnnotationCategory,
@@ -203,7 +274,7 @@ function buildExecutiveSummary(
 export const mockVerdictEngine: VerdictEngine = {
   async analyze(image: CreativeImage, context: CreativeContext): Promise<VerdictReport> {
     const seed = hashString(
-      `${context.brandName}|${context.website}|${context.industry}|${context.campaignObjective}|${context.targetAudience ?? ""}|${image.width}x${image.height}`,
+      `${context.brandName}|${context.website}|${context.industry}|${context.campaignObjective}|${context.campaignType}|${context.occasion ?? ""}|${context.targetAudience ?? ""}|${image.width}x${image.height}`,
     );
     const rng = mulberry32(seed);
     const aspectRatio = image.width / Math.max(image.height, 1);
@@ -228,6 +299,22 @@ export const mockVerdictEngine: VerdictEngine = {
       const blocking = verdict === "dont_launch" ? index === 0 || rng() > 0.6 : false;
       return { ...point, blocking };
     });
+
+    // Strategic-fit findings from the declared Campaign Type/Occasion, on
+    // top of the category-based findings above.
+    const campaignSignals = [
+      CAMPAIGN_TYPE_SIGNALS[context.campaignType],
+      context.occasion ? OCCASION_SIGNALS[context.occasion] : undefined,
+    ].filter((signal): signal is CampaignSignal => signal !== undefined);
+
+    for (const signal of campaignSignals) {
+      const { isStrength, point } = buildCampaignSignalPoint(rng, context, signal);
+      if (isStrength) {
+        strengths.push(point);
+      } else {
+        weaknesses.push({ ...point, blocking: false });
+      }
+    }
 
     const recommendations = weaknesses.map((weakness) => pick(rng, RECOMMENDATION_TEMPLATES[weakness.category])(context));
     if (recommendations.length === 0) {

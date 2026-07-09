@@ -15,6 +15,43 @@ const CAMPAIGN_OBJECTIVES = [
   { value: "app_installs", label: "App installs" },
 ];
 
+const CAMPAIGN_TYPES = [
+  { value: "evergreen", label: "Evergreen" },
+  { value: "promotion", label: "Promotion" },
+  { value: "sale", label: "Sale" },
+  { value: "product_launch", label: "Product Launch" },
+  { value: "holiday", label: "Holiday" },
+  { value: "seasonal", label: "Seasonal" },
+  { value: "retargeting", label: "Retargeting" },
+  { value: "brand_awareness", label: "Brand Awareness" },
+  { value: "other", label: "Other" },
+];
+
+// Only these Campaign Types plausibly tie to a specific date/event — see
+// PRODUCT_SPEC.md's "Occasion".
+const OCCASION_CAMPAIGN_TYPES = new Set([
+  "promotion",
+  "sale",
+  "holiday",
+  "seasonal",
+  "other",
+]);
+
+const OCCASIONS = [
+  { value: "none", label: "None" },
+  { value: "black_friday", label: "Black Friday" },
+  { value: "cyber_monday", label: "Cyber Monday" },
+  { value: "christmas", label: "Christmas" },
+  { value: "valentines_day", label: "Valentine's Day" },
+  { value: "mothers_day", label: "Mother's Day" },
+  { value: "fathers_day", label: "Father's Day" },
+  { value: "back_to_school", label: "Back to School" },
+  { value: "new_year", label: "New Year" },
+  { value: "summer_sale", label: "Summer Sale" },
+  { value: "spring_sale", label: "Spring Sale" },
+  { value: "other", label: "Other" },
+];
+
 const ANALYSIS_MESSAGES = [
   "Reading creative...",
   "Evaluating hierarchy...",
@@ -40,6 +77,9 @@ export function AnalyzeWorkspace() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [messageIndex, setMessageIndex] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Tracked purely to decide whether Occasion should render — the rest of
+  // the form stays uncontrolled and is read via FormData on submit.
+  const [campaignType, setCampaignType] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedFileRef = useRef<File | null>(null);
   const imageDimensionsRef = useRef<{ width: number; height: number } | null>(
@@ -136,6 +176,14 @@ export function AnalyzeWorkspace() {
       campaignObjective: String(
         formData.get("campaignObjective") ?? "",
       ) as CreativeContext["campaignObjective"],
+      campaignType: String(
+        formData.get("campaignType") ?? "",
+      ) as CreativeContext["campaignType"],
+      // Absent from FormData entirely when the field is hidden (not
+      // rendered) — same default as when it's visibly left at "None".
+      occasion: String(
+        formData.get("occasion") ?? "none",
+      ) as CreativeContext["occasion"],
       targetAudience:
         String(formData.get("targetAudience") ?? "").trim() || undefined,
     };
@@ -337,6 +385,45 @@ export function AnalyzeWorkspace() {
                 <ChevronIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
               </div>
             </Field>
+            <Field label="Campaign Type">
+              <div className="relative">
+                <select
+                  name="campaignType"
+                  required
+                  defaultValue=""
+                  onChange={(event) => setCampaignType(event.target.value)}
+                  className={`${fieldInputClass} appearance-none pr-9`}
+                >
+                  <option value="" disabled>
+                    Select a campaign type
+                  </option>
+                  {CAMPAIGN_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
+              </div>
+            </Field>
+            {OCCASION_CAMPAIGN_TYPES.has(campaignType) && (
+              <Field label="Occasion" hint="optional">
+                <div className="relative">
+                  <select
+                    name="occasion"
+                    defaultValue="none"
+                    className={`${fieldInputClass} appearance-none pr-9`}
+                  >
+                    {OCCASIONS.map((occasion) => (
+                      <option key={occasion.value} value={occasion.value}>
+                        {occasion.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
+                </div>
+              </Field>
+            )}
             <Field label="Target audience" hint="optional">
               <input
                 type="text"

@@ -18,10 +18,17 @@ export async function submitCreative(
     };
   }
 
-  if (!context?.brandName || !context.website || !context.industry || !context.campaignObjective) {
+  if (
+    !context?.brandName ||
+    !context.website ||
+    !context.industry ||
+    !context.campaignObjective ||
+    !context.campaignType
+  ) {
     return {
       status: "error",
-      message: "Some required fields are missing — fill in Brand, Website, Industry, and Campaign objective.",
+      message:
+        "Some required fields are missing — fill in Brand, Website, Industry, Campaign objective, and Campaign Type.",
     };
   }
 
