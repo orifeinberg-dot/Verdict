@@ -5,6 +5,16 @@
   --foreground: #171717;
   --accent: #c6ff00;
   --accent-ink: #171717;
+  /* Verdict status colors — theme-swapped, see UI_SPEC.md "Verdict status
+     color values". Distinct from Electric Lime on purpose. */
+  --verdict-launch: #047857;
+  --verdict-test: #b45309;
+  --verdict-dont-launch: #b91c1c;
+  /* Markers sit on top of the uploaded creative, not app chrome, so they
+     stay fixed in both themes rather than swapping with the badge/text
+     pair above. */
+  --marker-strength: #10b981;
+  --marker-weakness: #ef4444;
 }
 
 @theme inline {
@@ -12,6 +22,11 @@
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-verdict-launch: var(--verdict-launch);
+  --color-verdict-test: var(--verdict-test);
+  --color-verdict-dont-launch: var(--verdict-dont-launch);
+  --color-marker-strength: var(--marker-strength);
+  --color-marker-weakness: var(--marker-weakness);
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
 }
@@ -20,6 +35,9 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --verdict-launch: #34d399;
+    --verdict-test: #fbbf24;
+    --verdict-dont-launch: #f87171;
   }
 }
 

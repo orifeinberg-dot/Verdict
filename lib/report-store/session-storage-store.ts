@@ -91,7 +91,14 @@ function isStoredReport(value: unknown): value is StoredReport {
 export const sessionStorageReportStore: ReportStore = {
   save(entry) {
     const id = crypto.randomUUID();
-    sessionStorage.setItem(STORAGE_KEY_PREFIX + id, JSON.stringify(entry));
+    try {
+      sessionStorage.setItem(STORAGE_KEY_PREFIX + id, JSON.stringify(entry));
+    } catch (cause) {
+      // Most commonly a QuotaExceededError — sessionStorage has a small
+      // per-origin limit. Callers should catch this and show an inline
+      // error rather than let it crash the app.
+      throw new Error("Failed to save report to sessionStorage", { cause });
+    }
     return id;
   },
   load(id) {

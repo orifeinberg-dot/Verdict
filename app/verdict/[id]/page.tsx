@@ -2,19 +2,11 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useRef, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { reportStore } from "@/lib/report-store";
 import type { StoredReport } from "@/lib/report-store/types";
-
-// Development-only rendering for this milestone — plain and readable, not
-// the final polished report UI (markers, hotspot sync, etc. come next).
-// See DEVELOPMENT_PLAN.md / agents/prompts/008-design-verdict-report.md.
-
-const VERDICT_LABEL: Record<StoredReport["report"]["verdict"], string> = {
-  launch: "Launch",
-  test: "Test",
-  dont_launch: "Don't Launch",
-};
+import { AnnotatedImage } from "@/components/annotated-image";
+import { VerdictReport } from "@/components/verdict-report";
 
 const noopSubscribe = () => () => {};
 
@@ -45,6 +37,26 @@ export default function VerdictPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const entry = useStoredReport(id);
 
+  // Two pieces of state, not one: hover previews the sync without
+  // "committing" a selection (desktop only — there is no hover on touch),
+  // while a click/tap toggles a persistent selection. See UI_SPEC.md's
+  // note that this sync is the one piece of interaction worth getting
+  // right.
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const activeId = hoveredId ?? selectedId;
+
+  useEffect(() => {
+    if (!selectedId) return;
+    document
+      .getElementById(`point-${selectedId}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [selectedId]);
+
+  function handleSelect(pointId: string) {
+    setSelectedId((current) => (current === pointId ? null : pointId));
+  }
+
   if (!entry) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-24 text-center">
@@ -68,75 +80,28 @@ export default function VerdictPage() {
     );
   }
 
-  const { report, image, context } = entry;
+  const { report, image } = entry;
 
   return (
-    <main className="flex flex-1 flex-col px-6 py-16 sm:px-12">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-10">
-        <Link
-          href="/analyze"
-          className="text-sm text-foreground/60 transition-colors hover:text-foreground"
-        >
-          ← Analyze another creative
-        </Link>
-
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={image.dataUrl}
-          alt="Uploaded creative"
-          className="w-full rounded-2xl border border-foreground/10 object-contain"
-        />
-
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium tracking-wide text-foreground/50 uppercase">
-            Verdict
-          </span>
-          <h1 className="text-4xl font-semibold tracking-tight">
-            {VERDICT_LABEL[report.verdict]}
-          </h1>
-          <span className="text-sm text-foreground/60">
-            {report.confidence}% confidence
-          </span>
+    <main className="flex flex-1 flex-col px-6 py-12 sm:px-12 md:py-16">
+      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-10 md:grid-cols-2 md:items-start md:gap-14">
+        <div className="md:sticky md:top-12">
+          <AnnotatedImage
+            image={image}
+            strengths={report.strengths}
+            weaknesses={report.weaknesses}
+            activeId={activeId}
+            onHover={setHoveredId}
+            onSelect={handleSelect}
+          />
         </div>
-
-        <p className="text-lg text-foreground/80">{report.executiveSummary}</p>
-
-        <ReportSection
-          title="Strengths"
-          items={report.strengths.map((point) => point.summary)}
+        <VerdictReport
+          report={report}
+          activeId={activeId}
+          onHover={setHoveredId}
+          onSelect={handleSelect}
         />
-        <ReportSection
-          title="Weaknesses"
-          items={report.weaknesses.map((point) => point.summary)}
-        />
-        <ReportSection title="Recommendations" items={report.recommendations} />
-
-        <div className="flex flex-col gap-1 border-t border-foreground/10 pt-6 text-sm text-foreground/50">
-          <span>Brand: {context.brandName}</span>
-          <span>Industry: {context.industry}</span>
-          <span>Campaign objective: {context.campaignObjective}</span>
-        </div>
       </div>
     </main>
-  );
-}
-
-function ReportSection({ title, items }: { title: string; items: string[] }) {
-  if (items.length === 0) return null;
-
-  return (
-    <div className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <ul className="flex flex-col gap-2">
-        {items.map((item, index) => (
-          <li
-            key={index}
-            className="rounded-lg border border-foreground/10 px-4 py-3 text-sm text-foreground/80"
-          >
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }

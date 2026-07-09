@@ -73,12 +73,19 @@ export function AnalyzeWorkspace() {
           return;
         }
 
-        const id = reportStore.save({
-          report: result.report,
-          image: pending.image,
-          context: pending.context,
-        });
-        router.push(`/verdict/${id}`);
+        try {
+          const id = reportStore.save({
+            report: result.report,
+            image: pending.image,
+            context: pending.context,
+          });
+          router.push(`/verdict/${id}`);
+        } catch {
+          setIsAnalyzing(false);
+          setSubmitError(
+            "We couldn't save this report — your browser storage might be full. Try again, or use a smaller image.",
+          );
+        }
       },
       isLastMessage ? FINAL_MESSAGE_HOLD_MS : MESSAGE_INTERVAL_MS,
     );
@@ -134,10 +141,24 @@ export function AnalyzeWorkspace() {
     };
 
     setSubmitError(null);
+
+    let dataUrl: string;
+    try {
+      // Store a downscaled, recompressed copy rather than the original —
+      // a full-resolution PNG can exceed sessionStorage's per-origin quota
+      // on its own once base64-encoded. See ARCHITECTURE.md's "Image
+      // handling" section.
+      dataUrl = await resizeImageForStorage(file);
+    } catch {
+      setSubmitError(
+        "We couldn't process that image for upload. Try a different file.",
+      );
+      return;
+    }
+
     setMessageIndex(0);
     setIsAnalyzing(true);
 
-    const dataUrl = await fileToDataUrl(file);
     const image: CreativeImage = {
       dataUrl,
       width: dimensions.width,
@@ -408,12 +429,47 @@ function Field({
   );
 }
 
-function fileToDataUrl(file: File): Promise<string> {
+const STORED_IMAGE_MAX_DIMENSION = 1600;
+const STORED_IMAGE_QUALITY = 0.85;
+
+// Downscales and recompresses to JPEG before the image ever reaches
+// sessionStorage or the Server Action — a full-resolution upload (up to
+// 10MB, ~13.3MB as base64) can exceed sessionStorage's per-origin quota
+// on its own. Marker positions are percentage-based (UI_SPEC.md), so
+// re-encoding doesn't affect annotation accuracy.
+function resizeImageForStorage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      const scale = Math.min(
+        1,
+        STORED_IMAGE_MAX_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight),
+      );
+      const width = Math.round(image.naturalWidth * scale);
+      const height = Math.round(image.naturalHeight * scale);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+
+      URL.revokeObjectURL(objectUrl);
+
+      if (!context) {
+        reject(new Error("Canvas 2D context unavailable"));
+        return;
+      }
+
+      context.drawImage(image, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", STORED_IMAGE_QUALITY));
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Could not load image for resizing"));
+    };
+    image.src = objectUrl;
   });
 }
 
