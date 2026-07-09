@@ -136,10 +136,23 @@ Single centered column, max-width ~640px.
 - **Context form**: appears once an image is present (progressive
   disclosure — don't show the form before there's something to review).
   Fields per `PRODUCT_SPEC.md` (creative is already handled by the upload
-  zone above it): Brand, Website, Industry, Campaign objective, Target
+  zone above it), in this order: Brand, Website, Industry, Campaign
+  objective, Campaign Type, Occasion (conditional, see below), Target
   audience (optional). Laid out as compact labeled rows, not a dense grid.
   Selects use custom dropdowns consistent with the rest of the UI, not raw
   `<select>` chrome.
+  - Campaign objective and Campaign Type sit directly adjacent — see
+    `PRODUCT_SPEC.md`'s "Campaign objective vs. Campaign Type" for why
+    they're separate fields. Adjacency here is what makes the distinction
+    read as intentional rather than a duplicate question.
+  - Occasion appears immediately below Campaign Type, and only when
+    Campaign Type is Holiday, Seasonal, Promotion, Sale, or Other — no
+    transition/animation on show or hide, consistent with how the context
+    form itself appears once an image is selected (progressive disclosure
+    without extra motion). It defaults to "None" and never blocks
+    submission, even while visible. Styled identically to the other
+    custom dropdowns — no icons, no decorative holiday styling; it should
+    read as a normal form field, not a themed picker.
 - **Primary action**: single button, "Analyze," full width on mobile,
   disabled with a subtle inline hint until required fields + image are
   present. No modal confirmations.

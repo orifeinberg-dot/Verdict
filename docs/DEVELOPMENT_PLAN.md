@@ -14,22 +14,36 @@ per project convention.
 
 ## Current status (as of this revision)
 
-Only Milestone 4 (landing page) and a cosmetic stand-in for Milestones
-5–6 exist today. `/analyze` has a working upload dropzone, context form,
-and an analyzing-state animation, but it's all one monolithic component
-(`app/analyze/analyze-workspace.tsx`), not yet split per the component
-list below, and submitting the form fakes the wait with a `setTimeout`
-and hard-navigates to a placeholder `/verdict/demo` route with no real
-report data behind it. Milestones 1–3 (types, mock engine, report store,
-Server Action) haven't been started, and Milestone 7 (the real Verdict
-page) doesn't exist.
+Milestones 1–7 are implemented: real `VerdictEngine`/`ReportStore`,
+the Server Action, `/analyze`'s submit flow wired to real data, and a
+polished `/verdict/[id]` report page with synced annotation hotspots.
+Milestone 8 is partially done (light/dark mode and inline error states
+ship; a full copy pass does not).
 
-Practical implication for the next implementation prompt: it needs to
-scope in Milestones 1, 2, 3, and 7 together, plus rewiring `/analyze`'s
-submit handler to call the real Server Action instead of the fake
-timeout. The Verdict page can't render real data without the
-engine/store/action underneath it — "build the Verdict page" alone isn't
-a well-formed unit of work on its own.
+**New gap as of this revision:** `PRODUCT_SPEC.md`, `UI_SPEC.md`, and
+`ARCHITECTURE.md` now document two new `CreativeContext` fields —
+Campaign Type (required) and Occasion (conditional) — that are **not
+yet implemented in code**. The next implementation prompt touching
+`/analyze` or the data model needs to:
+
+- `lib/verdict/types.ts` — add the `CampaignType` and `Occasion` unions
+  and the two new `CreativeContext` fields, per `ARCHITECTURE.md`.
+- `app/analyze/analyze-workspace.tsx` — add the two new form fields
+  (Campaign Type required; Occasion conditional on Campaign Type, per
+  `UI_SPEC.md`'s show/hide rule), including the conditional
+  show/hide logic and the `None` default for Occasion.
+- `app/actions/submit-creative.ts` — extend the required-field check to
+  include `campaignType`.
+- `lib/report-store/session-storage-store.ts` — extend the hand-rolled
+  `isStoredReport` type guard to validate the two new fields (`occasion`
+  optional, `campaignType` required) so a stale/malformed session entry
+  from before this change still fails closed to `null` rather than
+  rendering a partially-typed report.
+- `lib/verdict/mock-engine.ts` — optionally incorporate `campaignType`/
+  `occasion` into the copy templates for added realism (e.g. flagging a
+  missing price/offer on a Sale or Promotion creative); not required for
+  correctness, but the field otherwise does nothing observable in the
+  mock phase.
 
 ## Milestone 1 — Types and mock engine (no UI)
 
@@ -108,8 +122,9 @@ even with `/analyze` not built yet (link can 404 briefly).
   hard-blocks unsupported type/oversized/corrupted files (inline error,
   per `UI_SPEC.md`) and surfaces non-blocking inline warnings for unusual
   aspect ratio or low resolution.
-- `components/context-form.tsx` — the five context fields from
-  `PRODUCT_SPEC.md` (Brand, Website, Industry, Campaign objective, Target
+- `components/context-form.tsx` — the context fields from
+  `PRODUCT_SPEC.md` (Brand, Website, Industry, Campaign objective,
+  Campaign Type, Occasion — conditional, see `UI_SPEC.md` — Target
   audience), client-validated against the shared zod schema, progressive
   disclosure (hidden until an image is present, per `UI_SPEC.md`).
 

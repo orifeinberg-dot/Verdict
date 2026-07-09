@@ -153,11 +153,45 @@ type VerdictReport = {
   recommendations: string[];
 };
 
+type CampaignType =
+  | "evergreen"
+  | "promotion"
+  | "sale"
+  | "product_launch"
+  | "holiday"
+  | "seasonal"
+  | "retargeting"
+  | "brand_awareness"
+  | "other";
+
+// Only meaningful for a subset of CampaignType values — see
+// PRODUCT_SPEC.md's "Occasion" and UI_SPEC.md for the conditional
+// show/hide rule. Optional even when the field is shown; "none" is the
+// default, not a placeholder state.
+type Occasion =
+  | "none"
+  | "black_friday"
+  | "cyber_monday"
+  | "christmas"
+  | "valentines_day"
+  | "mothers_day"
+  | "fathers_day"
+  | "back_to_school"
+  | "new_year"
+  | "summer_sale"
+  | "spring_sale"
+  | "other";
+
 type CreativeContext = {
   brandName: string;
   website: string;
   industry: string;
+  // Meta's funnel/optimization goal — distinct from campaignType below.
   campaignObjective: "awareness" | "traffic" | "conversions" | "app_installs";
+  // The strategic/content category the creative belongs to — see
+  // PRODUCT_SPEC.md's "Campaign objective vs. Campaign Type".
+  campaignType: CampaignType;
+  occasion?: Occasion;
   targetAudience?: string;
 };
 

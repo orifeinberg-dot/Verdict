@@ -154,12 +154,56 @@ not a brand-guidelines upload system.
 | Brand | text | yes | Used in the executive summary and brand-consistency checks |
 | Website | URL | yes | Grounds the model in the real brand in the AI-integration phase |
 | Industry | text | yes | Context for what's normal/expected in this category |
-| Campaign objective | select (Awareness / Traffic / Conversions / App installs) | yes | Anchors message-clarity checks |
+| Campaign objective | select (Awareness / Traffic / Conversions / App installs) | yes | Anchors message-clarity checks against the stated funnel goal |
+| Campaign Type | select (Evergreen / Promotion / Sale / Product Launch / Holiday / Seasonal / Retargeting / Brand Awareness / Other) | yes | Anchors expectations for tone, urgency, and content — e.g. a Sale creative is expected to show a price or offer in a way an Evergreen creative isn't |
+| Occasion | select, shown only for certain Campaign Types — see below | no | Grounds seasonal/timeliness checks when the campaign is tied to a specific date or event |
 | Target audience | short text | no | Sharper tone/relevance checks if provided |
 
 Reasoning: every required field maps directly to something the verdict
 engine can use. If a field doesn't change what the engine can say, it
 doesn't belong in the form.
+
+### Campaign objective vs. Campaign Type
+
+These two fields sit next to each other in the form on purpose — they
+answer related but distinct questions, and placing them adjacently is
+what makes the distinction legible to the user rather than reading as a
+duplicate question:
+
+- **Campaign objective** is Meta's funnel/optimization goal: what the
+  campaign is optimizing for (Awareness, Traffic, Conversions, App
+  installs). This is the standard Meta ads objective taxonomy.
+- **Campaign Type** is the strategic/content category the creative
+  belongs to: Evergreen, Promotion, Sale, Product Launch, Holiday,
+  Seasonal, Retargeting, Brand Awareness, or Other. This is about *what
+  kind of campaign moment* this is, independent of what it's optimizing
+  for — a Sale campaign can be optimizing for Conversions or Traffic; a
+  Product Launch can be optimizing for Awareness or Conversions.
+
+A creative's Campaign Type shapes what the verdict engine should
+*expect* to see (a Sale or Promotion creative that shows no price, offer,
+or urgency cue is a plausible message-clarity weakness; the same absence
+on an Evergreen or Brand Awareness creative isn't). Campaign objective
+alone can't carry that distinction, which is why both fields exist
+rather than folding one into the other.
+
+### Occasion
+
+Conditional field — only shown when Campaign Type is Holiday, Seasonal,
+Promotion, Sale, or Other, since only those campaign types are plausibly
+tied to a specific date or event. It stays hidden for Evergreen, Product
+Launch, Retargeting, and Brand Awareness, where an occasion is rarely
+meaningful and asking anyway would just add clutter.
+
+Options: None, Black Friday, Cyber Monday, Christmas, Valentine's Day,
+Mother's Day, Father's Day, Back to School, New Year, Summer Sale, Spring
+Sale, Other.
+
+Optional even when shown, defaulting to **None** — not every Promotion,
+Sale, or Other-type campaign is tied to a specific occasion, and the
+field shouldn't block submission just because it's visible. "Other" here
+does not get a follow-up free-text field in this pass — it's a plain,
+unqualified option, matching Campaign Type's own "Other."
 
 ## Image requirements and validation
 
