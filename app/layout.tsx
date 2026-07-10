@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Verdict",
   description:
-    "AI-powered reviews for static Meta ad creatives before you launch.",
+    "Structured, opinionated reviews for static Meta ad creatives before you launch.",
 };
 
 export default function RootLayout({

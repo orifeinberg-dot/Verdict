@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VerdictPreview } from "@/components/verdict-preview";
 
 export default function Home() {
   return (
@@ -8,7 +9,8 @@ export default function Home() {
           Before you spend, get a Verdict.
         </h1>
         <p className="max-w-xl text-lg text-foreground/70 text-balance sm:text-xl">
-          AI-powered reviews for static Meta ad creatives before you launch.
+          Structured, opinionated reviews for static Meta ad creatives before
+          you launch.
         </p>
         <Link
           href="/analyze"
@@ -16,6 +18,9 @@ export default function Home() {
         >
           Analyze a Creative
         </Link>
+        <div className="mt-6">
+          <VerdictPreview />
+        </div>
       </div>
     </main>
   );
