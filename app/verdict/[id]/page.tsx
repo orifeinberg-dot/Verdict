@@ -88,7 +88,7 @@ export default function VerdictPage() {
     );
   }
 
-  const { report, image } = entry;
+  const { report, image, context } = entry;
 
   return (
     <main className="flex flex-1 flex-col px-6 py-12 sm:px-12 md:py-16">
@@ -105,6 +105,7 @@ export default function VerdictPage() {
         </div>
         <VerdictReport
           report={report}
+          context={context}
           activeId={activeId}
           onHover={setHoveredId}
           onSelect={selectFinding}

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { VerdictReport as VerdictReportData } from "@/lib/verdict/types";
+import type { CreativeContext, VerdictReport as VerdictReportData } from "@/lib/verdict/types";
 import { VerdictBadge } from "./verdict-badge";
 import { ConfidenceScore } from "./confidence-score";
+import { CampaignContextSummary, buildContextItems } from "./campaign-context-summary";
 import { StrengthsList, WeaknessesList } from "./annotation-list";
 import { RecommendationsList } from "./recommendations-list";
 
@@ -14,12 +15,18 @@ const VERDICT_LABEL: Record<VerdictReportData["verdict"], string> = {
   dont_launch: "Don't Launch",
 };
 
-function buildSummaryText(report: VerdictReportData): string {
+function buildSummaryText(report: VerdictReportData, context: CreativeContext): string {
   const lines = [
     `Verdict: ${VERDICT_LABEL[report.verdict]} (${report.confidence}% confidence)`,
     "",
     report.executiveSummary,
   ];
+
+  const contextItems = buildContextItems(context);
+  if (contextItems.length > 0) {
+    lines.push("", "Campaign context:");
+    for (const { label, value } of contextItems) lines.push(`- ${label}: ${value}`);
+  }
 
   if (report.recommendations.length > 0) {
     lines.push("", "Recommendations:");
@@ -31,16 +38,17 @@ function buildSummaryText(report: VerdictReportData): string {
 
 type Props = {
   report: VerdictReportData;
+  context: CreativeContext;
   activeId: string | null;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
 };
 
-export function VerdictReport({ report, activeId, onHover, onSelect }: Props) {
+export function VerdictReport({ report, context, activeId, onHover, onSelect }: Props) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(buildSummaryText(report));
+    await navigator.clipboard.writeText(buildSummaryText(report, context));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -52,7 +60,10 @@ export function VerdictReport({ report, activeId, onHover, onSelect }: Props) {
         <ConfidenceScore confidence={report.confidence} />
       </div>
 
-      <p className="text-lg text-foreground/80">{report.executiveSummary}</p>
+      <div className="flex flex-col gap-3">
+        <p className="text-lg text-foreground/80">{report.executiveSummary}</p>
+        <CampaignContextSummary context={context} />
+      </div>
 
       <StrengthsList
         points={report.strengths}

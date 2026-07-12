@@ -18,6 +18,7 @@ type ListProps = {
 
 type Props = ListProps & {
   title: string;
+  description: string;
   kind: Kind;
   emptyMessage: string;
 };
@@ -26,6 +27,7 @@ type Props = ListProps & {
 // color and copy, so both are thin wrappers around this shared renderer.
 export function AnnotationList({
   title,
+  description,
   kind,
   points,
   activeId,
@@ -37,7 +39,10 @@ export function AnnotationList({
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">{title}</h2>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <p className="text-sm text-foreground/50">{description}</p>
+      </div>
       {points.length === 0 ? (
         <p className="text-sm text-foreground/50">{emptyMessage}</p>
       ) : (
@@ -113,6 +118,7 @@ export function StrengthsList(props: ListProps) {
   return (
     <AnnotationList
       title="Strengths"
+      description="What's working well."
       kind="strength"
       emptyMessage="No standout strengths flagged for this creative."
       {...props}
@@ -124,6 +130,7 @@ export function WeaknessesList(props: ListProps) {
   return (
     <AnnotationList
       title="Weaknesses"
+      description="What's holding this creative back."
       kind="weakness"
       emptyMessage="No significant weaknesses found."
       {...props}

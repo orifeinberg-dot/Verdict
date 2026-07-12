@@ -337,6 +337,7 @@ components/
   context-form.tsx
   analyzing-state.tsx
   verdict-report.tsx
+  campaign-context-summary.tsx
   annotated-image.tsx
 lib/
   verdict/
@@ -374,6 +375,7 @@ VerdictPage (app/verdict/[id]/page.tsx)
 └── VerdictReport
       ├── VerdictBadge (verdict + confidence, reveal animation on mount)
       ├── ExecutiveSummary
+      ├── CampaignContextSummary (submitted context, no interaction)
       ├── StrengthsList / WeaknessesList
       │     - row click/hover/tap -> setSelectedPointId
       │     - selectedPointId prop -> highlights the matching row
