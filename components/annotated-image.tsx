@@ -2,6 +2,7 @@
 
 import { Fragment } from "react";
 import type { AnnotatedPoint, BoundingBox, Weakness } from "@/lib/verdict/types";
+import { resolveMarkerLayout } from "@/lib/verdict/marker-layout";
 
 type Kind = "strength" | "weakness";
 
@@ -9,6 +10,7 @@ type Marker = {
   id: string;
   kind: Kind;
   box: BoundingBox;
+  summary: string;
 };
 
 function hasBoundingBox<T extends { boundingBox?: BoundingBox }>(
@@ -43,13 +45,29 @@ export function AnnotatedImage({
       id: point.id,
       kind: "strength" as const,
       box: point.boundingBox,
+      summary: point.summary,
     })),
     ...weaknesses.filter(hasBoundingBox).map((point) => ({
       id: point.id,
       kind: "weakness" as const,
       box: point.boundingBox,
+      summary: point.summary,
     })),
   ];
+
+  // Collision avoidance only ever nudges where the marker dot renders —
+  // the bounding box outline below always stays at its original
+  // coordinates. See lib/verdict/marker-layout.ts.
+  const resolvedPositions = resolveMarkerLayout(
+    markers.map((marker) => ({
+      id: marker.id,
+      centerXPercent: marker.box.x + marker.box.width / 2,
+      centerYPercent: marker.box.y + marker.box.height / 2,
+    })),
+    image.width,
+    image.height,
+  );
+  const positionById = new Map(resolvedPositions.map((position) => [position.id, position]));
 
   return (
     <div
@@ -62,14 +80,42 @@ export function AnnotatedImage({
         alt="Uploaded creative"
         className="absolute inset-0 h-full w-full object-cover"
       />
+      {/* Connectors for markers displaced by collision avoidance, drawn in
+          the image's own pixel space so they stay a true straight line
+          regardless of the creative's aspect ratio. */}
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        viewBox={`0 0 ${image.width} ${image.height}`}
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        {markers.map((marker) => {
+          const position = positionById.get(marker.id)!;
+          if (!position.displaced) return null;
+          const centerX = marker.box.x + marker.box.width / 2;
+          const centerY = marker.box.y + marker.box.height / 2;
+          return (
+            <line
+              key={marker.id}
+              x1={(centerX / 100) * image.width}
+              y1={(centerY / 100) * image.height}
+              x2={(position.xPercent / 100) * image.width}
+              y2={(position.yPercent / 100) * image.height}
+              className="stroke-foreground/40"
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+            />
+          );
+        })}
+      </svg>
       {markers.map((marker) => {
         const isActive = marker.id === activeId;
-        const centerX = marker.box.x + marker.box.width / 2;
-        const centerY = marker.box.y + marker.box.height / 2;
+        const position = positionById.get(marker.id)!;
         const dotClass =
           marker.kind === "strength" ? "bg-marker-strength" : "bg-marker-weakness";
         const outlineClass =
           marker.kind === "strength" ? "border-marker-strength" : "border-marker-weakness";
+        const kindLabel = marker.kind === "strength" ? "Strength" : "Weakness";
 
         return (
           <Fragment key={marker.id}>
@@ -87,18 +133,23 @@ export function AnnotatedImage({
             />
             <button
               type="button"
-              aria-label={`${marker.kind === "strength" ? "Strength" : "Weakness"} highlight`}
+              aria-label={`${kindLabel}: ${marker.summary}`}
               aria-pressed={isActive}
               onMouseEnter={() => onHover(marker.id)}
               onMouseLeave={() => onHover(null)}
               onFocus={() => onHover(marker.id)}
               onBlur={() => onHover(null)}
               onClick={() => onSelect(marker.id)}
-              className={`absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-md transition-transform duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${dotClass} ${
-                isActive ? "scale-125" : "scale-100"
-              }`}
-              style={{ left: `${centerX}%`, top: `${centerY}%` }}
-            />
+              className="absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              style={{ left: `${position.xPercent}%`, top: `${position.yPercent}%` }}
+            >
+              <span
+                aria-hidden="true"
+                className={`block h-6 w-6 rounded-full shadow-md transition-transform duration-150 ${dotClass} ${
+                  isActive ? "scale-125" : "scale-100"
+                }`}
+              />
+            </button>
           </Fragment>
         );
       })}

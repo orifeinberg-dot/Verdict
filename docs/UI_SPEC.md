@@ -252,14 +252,25 @@ treatment:
   rectangle fades in around the bounding box, so users see both the point
   of interest and its rough extent.
 - **Touch (mobile)**: there's no hover, so tap does the work hover+click
-  do together on desktop, in one step — tapping a marker selects it
-  (shows the outline, highlights the matching list row, scrolls the row
-  into view); tapping the same marker or its list row again deselects it;
-  tapping a different marker or row moves the selection. There's no
-  separate "preview on hover" state to design for on touch — selection is
-  just binary and explicit.
+  do together on desktop, in one step, and scrolling always follows the
+  side just tapped so the two scroll targets never fight each other:
+  tapping a marker selects it (shows the outline, highlights the matching
+  list row, scrolls the row into view); tapping a strength/weakness row
+  selects it (highlights the marker, scrolls the annotated creative into
+  view) — this is what keeps the image reachable when the row a user taps
+  is further down the page than the image. Tapping the same marker or row
+  again deselects it; tapping a different marker or row moves the
+  selection. There's no separate "preview on hover" state to design for on
+  touch — selection is just binary and explicit.
 - Markers never obscure the specific detail they're pointing at — offset
   the marker slightly outside the hotspot's corner when the area is small.
+- **Marker collision avoidance**: when two markers' centers land close
+  enough to overlap or make tapping the right one difficult, the marker
+  dot (not the bounding box) is nudged apart by a small, deterministic
+  amount, clamped so it never leaves the image. The bounding box outline
+  always stays at its original coordinates — only the point marking it
+  moves. If a marker is nudged far enough that its link to the box isn't
+  obvious, a subtle dashed connector line ties the two together.
 - All marker/hotspot coordinates are expressed as percentages of image
   width/height (not pixels), so the same data renders correctly at any
   display size, including responsive resizing.

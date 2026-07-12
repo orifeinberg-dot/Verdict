@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { reportStore } from "@/lib/report-store";
 import type { StoredReport } from "@/lib/report-store/types";
 import { AnnotatedImage } from "@/components/annotated-image";
@@ -45,16 +45,24 @@ export default function VerdictPage() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const activeId = hoveredId ?? selectedId;
+  const imageWrapperRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!selectedId) return;
-    document
-      .getElementById(`point-${selectedId}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [selectedId]);
+  // Scrolling only ever follows the side the user just interacted with —
+  // a marker tap reveals the matching row, a row tap reveals the image —
+  // so the two calls never fight over which target wins. Hover never
+  // scrolls at all, on either side.
+  function selectMarker(pointId: string) {
+    const isDeselecting = selectedId === pointId;
+    setSelectedId(isDeselecting ? null : pointId);
+    if (isDeselecting) return;
+    document.getElementById(`point-${pointId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
 
-  function handleSelect(pointId: string) {
-    setSelectedId((current) => (current === pointId ? null : pointId));
+  function selectFinding(pointId: string) {
+    const isDeselecting = selectedId === pointId;
+    setSelectedId(isDeselecting ? null : pointId);
+    if (isDeselecting) return;
+    imageWrapperRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   if (!entry) {
@@ -85,21 +93,21 @@ export default function VerdictPage() {
   return (
     <main className="flex flex-1 flex-col px-6 py-12 sm:px-12 md:py-16">
       <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-10 md:grid-cols-2 md:items-start md:gap-14">
-        <div className="md:sticky md:top-12">
+        <div ref={imageWrapperRef} className="md:sticky md:top-12">
           <AnnotatedImage
             image={image}
             strengths={report.strengths}
             weaknesses={report.weaknesses}
             activeId={activeId}
             onHover={setHoveredId}
-            onSelect={handleSelect}
+            onSelect={selectMarker}
           />
         </div>
         <VerdictReport
           report={report}
           activeId={activeId}
           onHover={setHoveredId}
-          onSelect={handleSelect}
+          onSelect={selectFinding}
         />
       </div>
     </main>
