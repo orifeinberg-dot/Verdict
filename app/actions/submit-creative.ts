@@ -20,7 +20,6 @@ export async function submitCreative(
 
   if (
     !context?.brandName ||
-    !context.website ||
     !context.industry ||
     !context.campaignObjective ||
     !context.campaignType
@@ -28,7 +27,7 @@ export async function submitCreative(
     return {
       status: "error",
       message:
-        "Some required fields are missing — fill in Brand, Website, Industry, Campaign objective, and Campaign Type.",
+        "Some required fields are missing — fill in Brand, Industry, Campaign objective, and Campaign type.",
     };
   }
 

@@ -64,7 +64,7 @@ const MESSAGE_INTERVAL_MS = 900;
 const FINAL_MESSAGE_HOLD_MS = 1100;
 
 const fieldInputClass =
-  "h-11 w-full rounded-lg border border-foreground/15 bg-transparent px-3.5 text-base text-foreground placeholder:text-foreground/35 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent";
+  "h-14 md:h-11 w-full rounded-lg border border-foreground/15 bg-transparent px-3.5 text-base text-foreground placeholder:text-foreground/35 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent";
 
 export function AnalyzeWorkspace() {
   const router = useRouter();
@@ -347,11 +347,10 @@ export function AnalyzeWorkspace() {
                 className={fieldInputClass}
               />
             </Field>
-            <Field label="Website">
+            <Field label="Website" hint="optional">
               <input
                 type="url"
                 name="website"
-                required
                 placeholder="https://..."
                 className={fieldInputClass}
               />
@@ -365,65 +364,70 @@ export function AnalyzeWorkspace() {
                 className={fieldInputClass}
               />
             </Field>
-            <Field label="Campaign objective">
-              <div className="relative">
-                <select
-                  name="campaignObjective"
-                  required
-                  defaultValue=""
-                  className={`${fieldInputClass} appearance-none pr-9`}
-                >
-                  <option value="" disabled>
-                    Select an objective
-                  </option>
-                  {CAMPAIGN_OBJECTIVES.map((objective) => (
-                    <option key={objective.value} value={objective.value}>
-                      {objective.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
-              </div>
-            </Field>
-            <Field label="Campaign Type">
-              <div className="relative">
-                <select
-                  name="campaignType"
-                  required
-                  defaultValue=""
-                  onChange={(event) => setCampaignType(event.target.value)}
-                  className={`${fieldInputClass} appearance-none pr-9`}
-                >
-                  <option value="" disabled>
-                    Select a campaign type
-                  </option>
-                  {CAMPAIGN_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
-              </div>
-            </Field>
-            {OCCASION_CAMPAIGN_TYPES.has(campaignType) && (
-              <Field label="Occasion" hint="optional">
+            <div className="flex flex-col gap-5">
+              <span className="text-xs font-medium tracking-wide text-foreground/40 uppercase">
+                Campaign context
+              </span>
+              <Field label="Campaign objective" helperText="What you're optimizing for.">
                 <div className="relative">
                   <select
-                    name="occasion"
-                    defaultValue="none"
+                    name="campaignObjective"
+                    required
+                    defaultValue=""
                     className={`${fieldInputClass} appearance-none pr-9`}
                   >
-                    {OCCASIONS.map((occasion) => (
-                      <option key={occasion.value} value={occasion.value}>
-                        {occasion.label}
+                    <option value="" disabled>
+                      Select an objective
+                    </option>
+                    {CAMPAIGN_OBJECTIVES.map((objective) => (
+                      <option key={objective.value} value={objective.value}>
+                        {objective.label}
                       </option>
                     ))}
                   </select>
                   <ChevronIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
                 </div>
               </Field>
-            )}
+              <Field label="Campaign type" helperText="The kind of campaign this is.">
+                <div className="relative">
+                  <select
+                    name="campaignType"
+                    required
+                    defaultValue=""
+                    onChange={(event) => setCampaignType(event.target.value)}
+                    className={`${fieldInputClass} appearance-none pr-9`}
+                  >
+                    <option value="" disabled>
+                      Select a campaign type
+                    </option>
+                    {CAMPAIGN_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
+                </div>
+              </Field>
+              {OCCASION_CAMPAIGN_TYPES.has(campaignType) && (
+                <Field label="Occasion" hint="optional">
+                  <div className="relative">
+                    <select
+                      name="occasion"
+                      defaultValue="none"
+                      className={`${fieldInputClass} appearance-none pr-9`}
+                    >
+                      {OCCASIONS.map((occasion) => (
+                        <option key={occasion.value} value={occasion.value}>
+                          {occasion.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" />
+                  </div>
+                </Field>
+              )}
+            </div>
             <Field label="Target audience" hint="optional">
               <input
                 type="text"
@@ -495,10 +499,12 @@ function AnalysisLoadingState({
 function Field({
   label,
   hint,
+  helperText,
   children,
 }: {
   label: string;
   hint?: string;
+  helperText?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -512,6 +518,9 @@ function Field({
         )}
       </span>
       {children}
+      {helperText && (
+        <span className="text-xs text-foreground/50">{helperText}</span>
+      )}
     </label>
   );
 }

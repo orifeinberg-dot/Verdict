@@ -136,15 +136,20 @@ Single centered column, max-width ~640px.
 - **Context form**: appears once an image is present (progressive
   disclosure — don't show the form before there's something to review).
   Fields per `PRODUCT_SPEC.md` (creative is already handled by the upload
-  zone above it), in this order: Brand, Website, Industry, Campaign
-  objective, Campaign Type, Occasion (conditional, see below), Target
-  audience (optional). Laid out as compact labeled rows, not a dense grid.
+  zone above it), in this order: Brand, Website (optional), Industry,
+  Campaign objective, Campaign type, Occasion (conditional, see below),
+  Target audience (optional). Laid out as compact labeled rows, not a
+  dense grid.
   Selects use custom dropdowns consistent with the rest of the UI, not raw
   `<select>` chrome.
-  - Campaign objective and Campaign Type sit directly adjacent — see
-    `PRODUCT_SPEC.md`'s "Campaign objective vs. Campaign Type" for why
-    they're separate fields. Adjacency here is what makes the distinction
-    read as intentional rather than a duplicate question.
+  - Campaign objective and Campaign type sit directly adjacent, grouped
+    under a small "Campaign context" label, with one short helper line
+    beneath each field's label ("What you're optimizing for." / "The
+    kind of campaign this is.") — see `PRODUCT_SPEC.md`'s "Campaign
+    objective vs. Campaign Type" for why they're separate fields. No
+    card or divider around the group — the label and helper text alone
+    are what makes the distinction read as intentional rather than a
+    duplicate question.
   - Occasion appears immediately below Campaign Type, and only when
     Campaign Type is Holiday, Seasonal, Promotion, Sale, or Other — no
     transition/animation on show or hide, consistent with how the context
@@ -170,8 +175,11 @@ route, after "Analyze" is pressed):
   "Checking policy risk…", "Weighing brand fit…", "Finalizing verdict…").
   These are cosmetic in the mock-engine phase and can become genuinely
   sequenced once real model calls exist in multiple steps — but even in the
-  mock phase they should hold for a perceptible minimum duration
-  (~1.5–2.5s total) so the product doesn't feel like it skipped a step.
+  mock phase they should hold for a perceptible minimum duration so the
+  product doesn't feel like it skipped a step. Currently implemented as
+  ~4.7s total across five rotating messages. This figure is provisional —
+  it was set for the mock engine and must be re-tuned once real OpenAI
+  latency is known, rather than treated as a target to preserve.
 - On completion, the app generates a report id, saves the result (see
   `ARCHITECTURE.md`), and navigates to `/verdict/[id]` — the user never
   manually dismisses this state.

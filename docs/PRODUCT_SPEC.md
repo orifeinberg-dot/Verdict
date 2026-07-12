@@ -152,7 +152,7 @@ not a brand-guidelines upload system.
 |---|---|---|---|
 | Static creative | image upload | yes | The thing being reviewed |
 | Brand | text | yes | Used in the executive summary and brand-consistency checks |
-| Website | URL | yes | Grounds the model in the real brand in the AI-integration phase |
+| Website | URL | no | Grounds the model in the real brand in the AI-integration phase — not required since the mock engine doesn't meaningfully use it yet |
 | Industry | text | yes | Context for what's normal/expected in this category |
 | Campaign objective | select (Awareness / Traffic / Conversions / App installs) | yes | Anchors message-clarity checks against the stated funnel goal |
 | Campaign Type | select (Evergreen / Promotion / Sale / Product Launch / Holiday / Seasonal / Retargeting / Brand Awareness / Other) | yes | Anchors expectations for tone, urgency, and content — e.g. a Sale creative is expected to show a price or offer in a way an Evergreen creative isn't |
