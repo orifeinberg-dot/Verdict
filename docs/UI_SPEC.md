@@ -226,10 +226,22 @@ verdict, then the rest).
   clarifying its role — Strengths: "What's working well."; Weaknesses:
   "What's holding this creative back." — reinforcing that both lists are
   diagnostic, not prescriptive. Each row shows its marker (if it has a
-  hotspot), category tag, and short explanation. Hovering or clicking a
-  row highlights the corresponding marker on the image (synchronized
-  selection state); clicking a marker scrolls to and highlights the
-  matching row. This bidirectional link is the one piece of real
+  hotspot), category tag, and short explanation; a row with no hotspot
+  carries a small "Applies to the overall creative" label instead, framed
+  as what the finding *is* (creative-wide, not localized) rather than
+  what's missing — plain helper-text styling, no badge/border/icon, so it
+  reads as lightweight metadata rather than a warning. The report doesn't
+  distinguish *why* a given finding lacks a location, so the wording
+  stays neutral rather than guessing a reason. Hovering or clicking a row
+  highlights the corresponding marker on the image (synchronized selection state);
+  the active row itself gets a visibly stronger border, background tint,
+  and a subtle shadow so the current selection is immediately obvious at
+  a glance, without any color or animation beyond the existing hover/
+  focus treatment. Clicking a marker scrolls to and highlights the
+  matching row — centered in the viewport on mobile for a comfortable
+  landing spot, and with the existing minimal-scroll behavior unchanged
+  on desktop, where the two-column layout already keeps the row
+  comfortably placed. This bidirectional link is the one piece of real
   interaction complexity in the product and worth getting right.
 - **Recommendations**: a numbered action list beneath strengths/weaknesses
   — not annotated on the image, since a recommendation is an action, not
@@ -268,7 +280,10 @@ treatment:
   are never annotated on the image — a recommendation is an action, not a
   location (`PRODUCT_SPEC.md`) — so there is no third marker type or
   color. If a strength/weakness has no `boundingBox`, it still appears in
-  its list normally, just without a marker or on-image click target.
+  its list normally, without a marker or on-image click target, and
+  carries a small "Applies to the overall creative" label (see
+  "Strengths / Weaknesses" above) so it reads as a deliberate,
+  creative-wide finding rather than a rendering gap.
 - Marker: a small filled circle (~24px), colored by kind (strength vs.
   weakness, not a three-tier severity scale) using the fixed marker
   values from "Verdict status color values" above (`#10B981` strength /
@@ -277,8 +292,11 @@ treatment:
   the app's chrome), positioned at the center of the hotspot, with a
   subtle drop shadow so it reads on any background.
 - On hover/focus (desktop): marker scales up slightly and a thin outline
-  rectangle fades in around the bounding box, so users see both the point
-  of interest and its rough extent.
+  rectangle fades in around the bounding box, along with a subtle fill
+  tinted by kind at low opacity, so the box reads as a deliberately
+  highlighted region rather than a bare wireframe rectangle — this holds
+  regardless of the box's own aspect ratio, since only the outline/fill
+  styling changes, never the box's actual coordinates.
 - **Touch (mobile)**: there's no hover, so tap does the work hover+click
   do together on desktop, in one step, and scrolling always follows the
   side just tapped so the two scroll targets never fight each other:
@@ -298,7 +316,10 @@ treatment:
   amount, clamped so it never leaves the image. The bounding box outline
   always stays at its original coordinates — only the point marking it
   moves. If a marker is nudged far enough that its link to the box isn't
-  obvious, a subtle dashed connector line ties the two together.
+  obvious, a subtle dashed connector line ties the two together, stopping
+  short of the marker dot's visible edge with a small gap rather than
+  running into its center, so it reads as a clean stand-off rather than
+  cramped.
 - All marker/hotspot coordinates are expressed as percentages of image
   width/height (not pixels), so the same data renders correctly at any
   display size, including responsive resizing.

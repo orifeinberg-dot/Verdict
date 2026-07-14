@@ -55,7 +55,15 @@ export default function VerdictPage() {
     const isDeselecting = selectedId === pointId;
     setSelectedId(isDeselecting ? null : pointId);
     if (isDeselecting) return;
-    document.getElementById(`point-${pointId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // On mobile, "nearest" lands the row right at the viewport edge —
+    // centering it reads as a comfortable landing spot instead. Desktop's
+    // two-column layout already keeps the row comfortably placed, so it
+    // keeps the original minimal-scroll behavior.
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    document.getElementById(`point-${pointId}`)?.scrollIntoView({
+      behavior: "smooth",
+      block: isMobile ? "center" : "nearest",
+    });
   }
 
   function selectFinding(pointId: string) {

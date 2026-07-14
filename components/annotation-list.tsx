@@ -81,18 +81,23 @@ function Row({
 
   const content = (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {hasMarker && <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`} />}
         <span className="rounded-full border border-foreground/15 px-2 py-0.5 text-xs text-foreground/60">
           {CATEGORY_LABELS[point.category]}
         </span>
+        {!hasMarker && (
+          <span className="text-xs text-foreground/60">Applies to the overall creative</span>
+        )}
       </div>
       <p className="text-sm text-foreground/80">{point.summary}</p>
     </>
   );
 
   const baseClass = `flex w-full flex-col gap-1.5 rounded-lg border px-4 py-3 text-left transition-colors ${
-    isActive ? "border-foreground/30 bg-foreground/[0.04]" : "border-foreground/10"
+    isActive
+      ? "border-foreground/50 bg-foreground/[0.07] shadow-sm"
+      : "border-foreground/10"
   }`;
 
   if (!hasMarker) {

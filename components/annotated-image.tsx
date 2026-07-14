@@ -92,15 +92,30 @@ export function AnnotatedImage({
         {markers.map((marker) => {
           const position = positionById.get(marker.id)!;
           if (!position.displaced) return null;
-          const centerX = marker.box.x + marker.box.width / 2;
-          const centerY = marker.box.y + marker.box.height / 2;
+          const x1 = (marker.box.x + marker.box.width / 2) * (image.width / 100);
+          const y1 = (marker.box.y + marker.box.height / 2) * (image.height / 100);
+          const x2 = (position.xPercent / 100) * image.width;
+          const y2 = (position.yPercent / 100) * image.height;
+
+          // Stop short of the marker dot's visible edge — a line that runs
+          // straight into the dot's center reads as cramped rather than a
+          // clean stand-off.
+          const dx = x2 - x1;
+          const dy = y2 - y1;
+          const distance = Math.hypot(dx, dy);
+          const GAP_PX = 16;
+          const trimmedDistance = Math.max(distance - GAP_PX, distance * 0.4);
+          const t = distance === 0 ? 0 : trimmedDistance / distance;
+          const endX = x1 + dx * t;
+          const endY = y1 + dy * t;
+
           return (
             <line
               key={marker.id}
-              x1={(centerX / 100) * image.width}
-              y1={(centerY / 100) * image.height}
-              x2={(position.xPercent / 100) * image.width}
-              y2={(position.yPercent / 100) * image.height}
+              x1={x1}
+              y1={y1}
+              x2={endX}
+              y2={endY}
               className="stroke-foreground/40"
               strokeWidth={1.5}
               strokeDasharray="3 3"
@@ -115,13 +130,15 @@ export function AnnotatedImage({
           marker.kind === "strength" ? "bg-marker-strength" : "bg-marker-weakness";
         const outlineClass =
           marker.kind === "strength" ? "border-marker-strength" : "border-marker-weakness";
+        const fillClass =
+          marker.kind === "strength" ? "bg-marker-strength/10" : "bg-marker-weakness/10";
         const kindLabel = marker.kind === "strength" ? "Strength" : "Weakness";
 
         return (
           <Fragment key={marker.id}>
             <div
               aria-hidden="true"
-              className={`pointer-events-none absolute rounded-md border-2 transition-opacity duration-200 ${outlineClass} ${
+              className={`pointer-events-none absolute rounded-md border-2 transition-opacity duration-200 ${outlineClass} ${fillClass} ${
                 isActive ? "opacity-100" : "opacity-0"
               }`}
               style={{
