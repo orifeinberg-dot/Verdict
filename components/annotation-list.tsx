@@ -44,7 +44,7 @@ export function AnnotationList({
         <p className="text-sm text-foreground/50">{description}</p>
       </div>
       {points.length === 0 ? (
-        <p className="text-sm text-foreground/50">{emptyMessage}</p>
+        <p className="text-sm font-medium text-foreground/80">{emptyMessage}</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {points.map((point) => (
@@ -137,7 +137,7 @@ export function WeaknessesList(props: ListProps) {
       title="Weaknesses"
       description="What's holding this creative back."
       kind="weakness"
-      emptyMessage="No significant weaknesses found."
+      emptyMessage="No significant weaknesses identified."
       {...props}
     />
   );
