@@ -1,9 +1,10 @@
 import type {
   CampaignObjective,
   CampaignType,
-  CreativeContext,
+  LegacyCampaignType,
   Occasion,
 } from "@/lib/verdict/types";
+import type { StoredCreativeContext } from "@/lib/report-store/types";
 
 const CAMPAIGN_OBJECTIVE_LABELS: Record<CampaignObjective, string> = {
   awareness: "Awareness",
@@ -15,14 +16,29 @@ const CAMPAIGN_OBJECTIVE_LABELS: Record<CampaignObjective, string> = {
 const CAMPAIGN_TYPE_LABELS: Record<CampaignType, string> = {
   evergreen: "Evergreen",
   promotion: "Promotion",
-  sale: "Sale",
   product_launch: "Product Launch",
-  holiday: "Holiday",
-  seasonal: "Seasonal",
   retargeting: "Retargeting",
   brand_awareness: "Brand Awareness",
   other: "Other",
 };
+
+// Retired Campaign Type values, kept only so a legacy sessionStorage
+// report still renders a readable label instead of "undefined" — see
+// LegacyCampaignType in lib/verdict/types.ts. Never offered as a choice
+// for new submissions.
+const LEGACY_CAMPAIGN_TYPE_LABELS: Record<LegacyCampaignType, string> = {
+  sale: "Sale",
+  holiday: "Holiday",
+  seasonal: "Seasonal",
+};
+
+function campaignTypeLabel(campaignType: CampaignType | LegacyCampaignType): string {
+  return (
+    CAMPAIGN_TYPE_LABELS[campaignType as CampaignType] ??
+    LEGACY_CAMPAIGN_TYPE_LABELS[campaignType as LegacyCampaignType] ??
+    campaignType
+  );
+}
 
 const OCCASION_LABELS: Record<Occasion, string> = {
   none: "None",
@@ -43,7 +59,7 @@ const OCCASION_LABELS: Record<Occasion, string> = {
 // strip — not a new report section. See UI_SPEC.md's "Campaign context
 // summary". Website is deliberately excluded (per PRODUCT_SPEC.md, it's
 // not yet meaningfully used by the engine).
-export function CampaignContextSummary({ context }: { context: CreativeContext }) {
+export function CampaignContextSummary({ context }: { context: StoredCreativeContext }) {
   const items = buildContextItems(context);
   if (items.length === 0) return null;
 
@@ -62,13 +78,13 @@ export function CampaignContextSummary({ context }: { context: CreativeContext }
 }
 
 export function buildContextItems(
-  context: CreativeContext,
+  context: StoredCreativeContext,
 ): { label: string; value: string }[] {
   const items: { label: string; value: string }[] = [];
 
   if (context.brandName) items.push({ label: "Brand", value: context.brandName });
   items.push({ label: "Objective", value: CAMPAIGN_OBJECTIVE_LABELS[context.campaignObjective] });
-  items.push({ label: "Type", value: CAMPAIGN_TYPE_LABELS[context.campaignType] });
+  items.push({ label: "Type", value: campaignTypeLabel(context.campaignType) });
   if (context.occasion && context.occasion !== "none") {
     items.push({ label: "Occasion", value: OCCASION_LABELS[context.occasion] });
   }

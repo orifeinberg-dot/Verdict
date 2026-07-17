@@ -9,6 +9,14 @@ const CATEGORY_LABELS: Record<AnnotationCategory, string> = {
 
 type Kind = "strength" | "weakness";
 
+// "Policy risk" reads as contradictory on a strength row — a policy-related
+// strength gets its own positive label instead. Every other category's
+// label is neutral enough to apply to both strengths and weaknesses as-is.
+function categoryLabel(category: AnnotationCategory, kind: Kind): string {
+  if (category === "policy_risk" && kind === "strength") return "Policy compliance";
+  return CATEGORY_LABELS[category];
+}
+
 type ListProps = {
   points: AnnotatedPoint[];
   activeId: string | null;
@@ -51,6 +59,7 @@ export function AnnotationList({
             <li key={point.id} id={`point-${point.id}`}>
               <Row
                 point={point}
+                kind={kind}
                 dotClass={dotClass}
                 isActive={point.id === activeId}
                 onHover={onHover}
@@ -66,12 +75,14 @@ export function AnnotationList({
 
 function Row({
   point,
+  kind,
   dotClass,
   isActive,
   onHover,
   onSelect,
 }: {
   point: AnnotatedPoint;
+  kind: Kind;
   dotClass: string;
   isActive: boolean;
   onHover: (id: string | null) => void;
@@ -84,7 +95,7 @@ function Row({
       <div className="flex flex-wrap items-center gap-2">
         {hasMarker && <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`} />}
         <span className="rounded-full border border-foreground/15 px-2 py-0.5 text-xs text-foreground/60">
-          {CATEGORY_LABELS[point.category]}
+          {categoryLabel(point.category, kind)}
         </span>
         {!hasMarker && (
           <span className="text-xs text-foreground/60">Applies to the overall creative</span>

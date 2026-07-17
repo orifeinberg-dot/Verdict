@@ -1,6 +1,8 @@
 import type {
   AnnotatedPoint,
   AnnotationCategory,
+  Occasion,
+  StoredCampaignType,
   Verdict,
   Weakness,
 } from "@/lib/verdict/types";
@@ -14,6 +16,38 @@ const VALID_CATEGORIES: AnnotationCategory[] = [
   "legibility",
   "brand_consistency",
   "message_clarity",
+];
+
+// Current Campaign Type options plus retired ones ("sale", "holiday",
+// "seasonal") from before the taxonomy simplification — see
+// StoredCampaignType in lib/verdict/types.ts. An explicit allowlist
+// rather than "any string" so genuinely malformed data still fails
+// closed to null.
+const VALID_STORED_CAMPAIGN_TYPES: StoredCampaignType[] = [
+  "evergreen",
+  "promotion",
+  "product_launch",
+  "retargeting",
+  "brand_awareness",
+  "other",
+  "sale",
+  "holiday",
+  "seasonal",
+];
+
+const VALID_OCCASIONS: Occasion[] = [
+  "none",
+  "black_friday",
+  "cyber_monday",
+  "christmas",
+  "valentines_day",
+  "mothers_day",
+  "fathers_day",
+  "back_to_school",
+  "new_year",
+  "summer_sale",
+  "spring_sale",
+  "other",
 ];
 
 function isBoundingBox(value: unknown): boolean {
@@ -79,6 +113,11 @@ function isStoredReport(value: unknown): value is StoredReport {
     typeof context.website === "string" &&
     typeof context.industry === "string" &&
     typeof context.campaignObjective === "string" &&
+    VALID_STORED_CAMPAIGN_TYPES.includes(
+      context.campaignType as StoredCampaignType,
+    ) &&
+    (context.occasion === undefined ||
+      VALID_OCCASIONS.includes(context.occasion as Occasion)) &&
     (context.targetAudience === undefined ||
       typeof context.targetAudience === "string");
 

@@ -45,13 +45,24 @@ export type CampaignObjective =
 export type CampaignType =
   | "evergreen"
   | "promotion"
-  | "sale"
   | "product_launch"
-  | "holiday"
-  | "seasonal"
   | "retargeting"
   | "brand_awareness"
   | "other";
+
+// Retired Campaign Type values from before the taxonomy simplification —
+// see agents/prompts/020-report-language-and-taxonomy-cleanup.md. "sale",
+// "holiday", and "seasonal" now fold into "promotion" (with Occasion
+// carrying the specific event); these are kept only so legacy
+// sessionStorage reports can still load and render, never offered as a
+// choice for new submissions.
+export type LegacyCampaignType = "sale" | "holiday" | "seasonal";
+
+// The set of campaignType values a *stored* report may legitimately
+// contain — current options plus retired ones from before this
+// simplification. New submissions are always CampaignType; this wider
+// type exists only for reading back old sessionStorage entries.
+export type StoredCampaignType = CampaignType | LegacyCampaignType;
 
 // Only meaningful for a subset of CampaignType values — see
 // PRODUCT_SPEC.md's "Occasion" and UI_SPEC.md for the conditional

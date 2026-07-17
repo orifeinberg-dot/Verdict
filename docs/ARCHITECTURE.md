@@ -60,10 +60,14 @@ Concretely:
 
 ```ts
 // lib/report-store/types.ts
+// context.campaignType is StoredCampaignType, not CampaignType — a report
+// saved before the taxonomy simplification may still carry a
+// LegacyCampaignType value, and this widened type is what lets it load
+// and render instead of failing validation.
 type StoredReport = {
   report: VerdictReport;
   image: { dataUrl: string; width: number; height: number };
-  context: CreativeContext;
+  context: Omit<CreativeContext, "campaignType"> & { campaignType: StoredCampaignType };
 };
 
 interface ReportStore {
@@ -155,14 +159,18 @@ type VerdictReport = {
 
 type CampaignType =
   | "evergreen"
-  | "promotion"
-  | "sale"
+  | "promotion" // covers sales, discounts, limited-time and holiday/seasonal offers
   | "product_launch"
-  | "holiday"
-  | "seasonal"
   | "retargeting"
   | "brand_awareness"
   | "other";
+
+// Retired values from before the taxonomy simplification — see
+// agents/prompts/020-report-language-and-taxonomy-cleanup.md. Never
+// offered to new submissions; recognized only so a legacy sessionStorage
+// report still loads and renders instead of crashing.
+type LegacyCampaignType = "sale" | "holiday" | "seasonal";
+type StoredCampaignType = CampaignType | LegacyCampaignType;
 
 // Only meaningful for a subset of CampaignType values — see
 // PRODUCT_SPEC.md's "Occasion" and UI_SPEC.md for the conditional
@@ -257,9 +265,12 @@ Zod (or equivalent) schema for `CreativeContext` shared between the
 validation are the same source of truth. For the OpenAI phase, the same
 approach validates the model's JSON output before it's trusted — never
 render unvalidated model output directly into the report UI. The
-`ReportStore`'s `load` should similarly validate what it reads back out of
+`ReportStore`'s `load` similarly validates what it reads back out of
 `sessionStorage` before trusting it (defends against a stale shape from a
-previous version of the app during local development).
+previous version of the app during local development) — including
+`campaignType` against an explicit allowlist of current and legacy
+values, and `occasion` against the full `Occasion` union, rather than
+just checking field presence.
 
 **Image validation** happens in two places, doing different jobs:
 

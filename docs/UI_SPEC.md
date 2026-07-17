@@ -151,13 +151,13 @@ Single centered column, max-width ~640px.
     are what makes the distinction read as intentional rather than a
     duplicate question.
   - Occasion appears immediately below Campaign Type, and only when
-    Campaign Type is Holiday, Seasonal, Promotion, Sale, or Other — no
-    transition/animation on show or hide, consistent with how the context
+    Campaign Type is Promotion or Other — no transition/animation on show
+    or hide, consistent with how the context
     form itself appears once an image is selected (progressive disclosure
     without extra motion). It defaults to "None" and never blocks
     submission, even while visible. Styled identically to the other
-    custom dropdowns — no icons, no decorative holiday styling; it should
-    read as a normal form field, not a themed picker.
+    custom dropdowns — no icons, no decorative seasonal/event styling; it
+    should read as a normal form field, not a themed picker.
 - **Primary action**: single button, "Analyze," full width on mobile,
   disabled with a subtle inline hint until required fields + image are
   present. No modal confirmations.
@@ -226,7 +226,10 @@ verdict, then the rest).
   clarifying its role — Strengths: "What's working well."; Weaknesses:
   "What's holding this creative back." — reinforcing that both lists are
   diagnostic, not prescriptive. Each row shows its marker (if it has a
-  hotspot), category tag, and short explanation; a row with no hotspot
+  hotspot), category tag, and short explanation — the Policy risk category
+  renders as "Policy compliance" on a strength row and "Policy risk" on a
+  weakness row, per `PRODUCT_SPEC.md`'s "Categories"; every other category
+  label is unchanged between the two lists. A row with no hotspot
   carries a small "Applies to the overall creative" label instead, framed
   as what the finding *is* (creative-wide, not localized) rather than
   what's missing — plain helper-text styling, no badge/border/icon, so it

@@ -18,10 +18,7 @@ const CAMPAIGN_OBJECTIVES = [
 const CAMPAIGN_TYPES = [
   { value: "evergreen", label: "Evergreen" },
   { value: "promotion", label: "Promotion" },
-  { value: "sale", label: "Sale" },
   { value: "product_launch", label: "Product Launch" },
-  { value: "holiday", label: "Holiday" },
-  { value: "seasonal", label: "Seasonal" },
   { value: "retargeting", label: "Retargeting" },
   { value: "brand_awareness", label: "Brand Awareness" },
   { value: "other", label: "Other" },
@@ -29,13 +26,7 @@ const CAMPAIGN_TYPES = [
 
 // Only these Campaign Types plausibly tie to a specific date/event — see
 // PRODUCT_SPEC.md's "Occasion".
-const OCCASION_CAMPAIGN_TYPES = new Set([
-  "promotion",
-  "sale",
-  "holiday",
-  "seasonal",
-  "other",
-]);
+const OCCASION_CAMPAIGN_TYPES = new Set(["promotion", "other"]);
 
 const OCCASIONS = [
   { value: "none", label: "None" },

@@ -20,30 +20,28 @@ polished `/verdict/[id]` report page with synced annotation hotspots.
 Milestone 8 is partially done (light/dark mode and inline error states
 ship; a full copy pass does not).
 
-**New gap as of this revision:** `PRODUCT_SPEC.md`, `UI_SPEC.md`, and
-`ARCHITECTURE.md` now document two new `CreativeContext` fields —
-Campaign Type (required) and Occasion (conditional) — that are **not
-yet implemented in code**. The next implementation prompt touching
-`/analyze` or the data model needs to:
+Campaign Type and Occasion (`CreativeContext` fields) shipped in a prior
+milestone (see `agents/prompts/013-implement-campaign-context-fields.md`),
+including form fields, conditional show/hide, and Server Action
+validation — the "new gap" this section used to describe here is
+resolved.
 
-- `lib/verdict/types.ts` — add the `CampaignType` and `Occasion` unions
-  and the two new `CreativeContext` fields, per `ARCHITECTURE.md`.
-- `app/analyze/analyze-workspace.tsx` — add the two new form fields
-  (Campaign Type required; Occasion conditional on Campaign Type, per
-  `UI_SPEC.md`'s show/hide rule), including the conditional
-  show/hide logic and the `None` default for Occasion.
-- `app/actions/submit-creative.ts` — extend the required-field check to
-  include `campaignType`.
-- `lib/report-store/session-storage-store.ts` — extend the hand-rolled
-  `isStoredReport` type guard to validate the two new fields (`occasion`
-  optional, `campaignType` required) so a stale/malformed session entry
-  from before this change still fails closed to `null` rather than
-  rendering a partially-typed report.
-- `lib/verdict/mock-engine.ts` — optionally incorporate `campaignType`/
-  `occasion` into the copy templates for added realism (e.g. flagging a
-  missing price/offer on a Sale or Promotion creative); not required for
-  correctness, but the field otherwise does nothing observable in the
-  mock phase.
+The `020` milestone (see
+`agents/prompts/020-report-language-and-taxonomy-cleanup.md`) simplified
+Campaign Type from nine options down to six (Evergreen, Promotion,
+Product Launch, Retargeting, Brand Awareness, Other — folding Sale,
+Holiday, and Seasonal into Promotion) and narrowed Occasion's visibility
+to Promotion/Other only. It also fixed two report-language issues found
+in manual QA: the "Policy risk" category label now renders as "Policy
+compliance" when it lands on a strength (previously the same "Policy
+risk" label appeared on both strengths and weaknesses, reading as
+contradictory), and the user-facing word "blocking" was replaced with
+"Critical issue" / "Must fix before launch" (the internal
+`Weakness.blocking` flag is unchanged). As part of this,
+`lib/report-store/session-storage-store.ts`'s `isStoredReport` guard now
+validates `campaignType` against an explicit allowlist of current and
+legacy values, and `occasion` against the full `Occasion` union — closing
+a validation gap that had been called out here but never implemented.
 
 ## Milestone 1 — Types and mock engine (no UI)
 

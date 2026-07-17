@@ -81,7 +81,7 @@ presented as the headline — the three-way verdict is the product's voice.
 |---|---|
 | **Launch** | No material issues found. Creative is consistent with policy and stated goals. |
 | **Test** | Workable, but has specific fixable issues or open questions worth an A/B test or a second look before committing full budget. |
-| **Don't Launch** | Has a blocking issue — likely policy violation, illegible/broken layout, off-brand execution, or a mismatch with the stated campaign goal severe enough that spend would likely be wasted. |
+| **Don't Launch** | Has a critical issue — likely policy violation, illegible/broken layout, off-brand execution, or a mismatch with the stated campaign goal severe enough that spend would likely be wasted. Must fix before launch. |
 
 Each Verdict Report is backed by:
 - A **confidence score** (0–100) — how sure the engine is in the verdict
@@ -120,7 +120,7 @@ not generic AI-assistant output. Concretely:
   beats "make sure your CTA stands out").
 - Short sentences over long ones. The executive summary should read in one
   breath.
-- Confident, not apologetic — a "Don't Launch" verdict states the blocking
+- Confident, not apologetic — a "Don't Launch" verdict states the critical
   issue plainly rather than softening it into a suggestion.
 
 This applies equally to the mock engine's copy templates and, later, the
@@ -135,13 +135,29 @@ and weaknesses:
 
 1. **Policy risk** — likely to be rejected or restricted by Meta ad review
    (e.g., excessive text on image, prohibited claims language, before/after
-   framing).
+   framing). On a strength, this same category renders as **Policy
+   compliance** instead — "Policy risk" reads as a contradiction next to a
+   positive finding, so the label (not the underlying category) flips
+   depending on whether the point lands in Strengths or Weaknesses.
 2. **Legibility / layout** — text too small, low contrast, key element
    cropped or obscured, cluttered composition.
 3. **Brand consistency** — logo, color, or tone mismatch with the stated
    brand description.
 4. **Message clarity** — value proposition or CTA is unclear or missing
    given the stated campaign objective.
+
+### "Critical issue" terminology
+
+The internal `blocking` flag on a `Weakness` (does this alone justify a
+"Don't Launch" verdict?) is never shown to the user under that name. Where
+the report needs to communicate it, the user-facing language is:
+
+- **Critical issue** — the label.
+- **Must fix before launch** — the explanatory phrase, used where more
+  context helps (e.g. the executive summary for a "Don't Launch" verdict).
+
+This applies to generated copy only; it doesn't change verdict logic or
+weaken how plainly a genuinely launch-preventing issue is stated.
 
 ## Analyze form
 
@@ -155,7 +171,7 @@ not a brand-guidelines upload system.
 | Website | URL | no | Grounds the model in the real brand in the AI-integration phase — not required since the mock engine doesn't meaningfully use it yet |
 | Industry | text | yes | Context for what's normal/expected in this category |
 | Campaign objective | select (Awareness / Traffic / Conversions / App installs) | yes | Anchors message-clarity checks against the stated funnel goal |
-| Campaign Type | select (Evergreen / Promotion / Sale / Product Launch / Holiday / Seasonal / Retargeting / Brand Awareness / Other) | yes | Anchors expectations for tone, urgency, and content — e.g. a Sale creative is expected to show a price or offer in a way an Evergreen creative isn't |
+| Campaign Type | select (Evergreen / Promotion / Product Launch / Retargeting / Brand Awareness / Other) | yes | Anchors expectations for tone, urgency, and content — e.g. a Promotion creative is expected to show a price or offer in a way an Evergreen creative isn't |
 | Occasion | select, shown only for certain Campaign Types — see below | no | Grounds seasonal/timeliness checks when the campaign is tied to a specific date or event |
 | Target audience | short text | no | Sharper tone/relevance checks if provided |
 
@@ -174,36 +190,53 @@ duplicate question:
   campaign is optimizing for (Awareness, Traffic, Conversions, App
   installs). This is the standard Meta ads objective taxonomy.
 - **Campaign Type** is the strategic/content category the creative
-  belongs to: Evergreen, Promotion, Sale, Product Launch, Holiday,
-  Seasonal, Retargeting, Brand Awareness, or Other. This is about *what
-  kind of campaign moment* this is, independent of what it's optimizing
-  for — a Sale campaign can be optimizing for Conversions or Traffic; a
-  Product Launch can be optimizing for Awareness or Conversions.
+  belongs to: Evergreen, Promotion, Product Launch, Retargeting, Brand
+  Awareness, or Other. This is about *what kind of campaign moment* this
+  is, independent of what it's optimizing for — a Promotion campaign can
+  be optimizing for Conversions or Traffic; a Product Launch can be
+  optimizing for Awareness or Conversions.
+
+**Promotion** is deliberately broad: it covers sales, discounts,
+limited-time offers, and holiday or seasonal promotions alike. Earlier
+revisions of this spec had separate Sale, Holiday, and Seasonal options,
+but all three overlapped conceptually with Promotion and exposed the same
+Occasion choices, so they were folded in — the specific event or season,
+if any, belongs in Occasion instead (see below).
 
 A creative's Campaign Type shapes what the verdict engine should
-*expect* to see (a Sale or Promotion creative that shows no price, offer,
-or urgency cue is a plausible message-clarity weakness; the same absence
-on an Evergreen or Brand Awareness creative isn't). Campaign objective
-alone can't carry that distinction, which is why both fields exist
-rather than folding one into the other.
+*expect* to see (a Promotion creative that shows no price, offer, or
+urgency cue is a plausible message-clarity weakness; the same absence on
+an Evergreen or Brand Awareness creative isn't). Campaign objective alone
+can't carry that distinction, which is why both fields exist rather than
+folding one into the other.
 
 ### Occasion
 
-Conditional field — only shown when Campaign Type is Holiday, Seasonal,
-Promotion, Sale, or Other, since only those campaign types are plausibly
-tied to a specific date or event. It stays hidden for Evergreen, Product
-Launch, Retargeting, and Brand Awareness, where an occasion is rarely
-meaningful and asking anyway would just add clutter.
+Conditional field — only shown when Campaign Type is Promotion or Other,
+since those are the only campaign types plausibly tied to a specific date
+or event. It stays hidden for Evergreen, Product Launch, Retargeting, and
+Brand Awareness, where an occasion is rarely meaningful and asking anyway
+would just add clutter.
 
 Options: None, Black Friday, Cyber Monday, Christmas, Valentine's Day,
 Mother's Day, Father's Day, Back to School, New Year, Summer Sale, Spring
 Sale, Other.
 
-Optional even when shown, defaulting to **None** — not every Promotion,
-Sale, or Other-type campaign is tied to a specific occasion, and the
-field shouldn't block submission just because it's visible. "Other" here
-does not get a follow-up free-text field in this pass — it's a plain,
+Optional even when shown, defaulting to **None** — not every Promotion or
+Other-type campaign is tied to a specific occasion, and the field
+shouldn't block submission just because it's visible. "Other" here does
+not get a follow-up free-text field in this pass — it's a plain,
 unqualified option, matching Campaign Type's own "Other."
+
+### Legacy Campaign Type values
+
+Reports saved to sessionStorage before this simplification may still
+contain `campaignType: "sale" | "holiday" | "seasonal"`. These are not
+offered to new submissions, but the report store and display labels
+explicitly recognize all three so an old report still loads and renders
+a readable "Sale"/"Holiday"/"Seasonal" label rather than crashing or
+showing blank/undefined text. See `lib/verdict/types.ts`'s
+`LegacyCampaignType` and `lib/report-store/session-storage-store.ts`.
 
 ## Image requirements and validation
 

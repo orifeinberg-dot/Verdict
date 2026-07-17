@@ -149,26 +149,21 @@ type CampaignSignal = {
 };
 
 // Strategic-fit findings: how well the creative matches the expectations
-// of its declared Campaign Type/Occasion (e.g. a Sale creative is
-// expected to show a price; an Evergreen one shouldn't lean on fake
-// urgency). Deliberately covers a representative subset of values, not
-// every Campaign Type × Occasion combination — see DEVELOPMENT_PLAN.md.
+// of its declared Campaign Type/Occasion (e.g. a Promotion creative is
+// expected to show a price or offer; an Evergreen one shouldn't lean on
+// fake urgency). Deliberately covers a representative subset of values,
+// not every Campaign Type × Occasion combination — see DEVELOPMENT_PLAN.md.
 // These findings never carry a boundingBox: they're about strategic fit,
 // not a location on the image, so they never get a marker (UI_SPEC.md).
 const CAMPAIGN_TYPE_SIGNALS: Partial<Record<CampaignType, CampaignSignal>> = {
-  sale: {
-    category: "message_clarity",
-    strengthText: () =>
-      "The price or discount is stated clearly, so there's no ambiguity about what's actually on sale.",
-    weaknessText: () =>
-      "There's no visible price or discount callout — for a Sale creative, that's usually the first thing a viewer looks for.",
-  },
+  // Covers sales, discounts, limited-time offers, and holiday/seasonal
+  // promotions — see PRODUCT_SPEC.md's Campaign Type taxonomy.
   promotion: {
     category: "message_clarity",
     strengthText: () =>
-      "The promotional offer is front and center, with a clear reason to act now.",
+      "The price, discount, or offer is stated clearly, so there's no ambiguity about what's on the table or why to act now.",
     weaknessText: () =>
-      "The promotion itself isn't obvious from the creative — it reads as a regular ad rather than a limited-time push.",
+      "There's no visible price, discount, or offer callout — for a Promotion creative, that's usually the first thing a viewer looks for.",
   },
   product_launch: {
     category: "message_clarity",
@@ -263,11 +258,11 @@ function buildExecutiveSummary(
   const brand = ctx.brandName || "This creative";
   switch (verdict) {
     case "launch":
-      return `${brand} is ready to spend against. ${topStrength ? topStrength.summary : "The core message and layout both hold up."} No blocking issues found for a ${objectiveLabel(ctx.campaignObjective)} campaign.`;
+      return `${brand} is ready to spend against. ${topStrength ? topStrength.summary : "The core message and layout both hold up."} No critical issues found for a ${objectiveLabel(ctx.campaignObjective)} campaign.`;
     case "test":
       return `${brand} is workable but not a clean launch yet. ${topWeakness ? topWeakness.summary : "There are a couple of open questions worth resolving first."} Worth an A/B test or a second look before committing full budget.`;
     case "dont_launch":
-      return `${brand} shouldn't go live as-is. ${topWeakness ? topWeakness.summary : "There's a blocking issue that likely wastes spend if this runs today."} Fix the flagged issue before this reaches a real audience.`;
+      return `${brand} shouldn't go live as-is. ${topWeakness ? topWeakness.summary : "There's a critical issue — must fix before launch — that likely wastes spend if this runs today."} Fix the flagged issue before this reaches a real audience.`;
   }
 }
 
@@ -319,7 +314,7 @@ export const mockVerdictEngine: VerdictEngine = {
     const recommendations = weaknesses.map((weakness) => pick(rng, RECOMMENDATION_TEMPLATES[weakness.category])(context));
     if (recommendations.length === 0) {
       recommendations.push(
-        "Nothing blocking here — consider a lightweight A/B test against a different headline to see if performance improves further.",
+        "No critical issues here — consider a lightweight A/B test against a different headline to see if performance improves further.",
       );
     }
 

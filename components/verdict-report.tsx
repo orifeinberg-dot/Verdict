@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { CreativeContext, VerdictReport as VerdictReportData } from "@/lib/verdict/types";
+import type { VerdictReport as VerdictReportData } from "@/lib/verdict/types";
+import type { StoredCreativeContext } from "@/lib/report-store/types";
 import { VerdictBadge } from "./verdict-badge";
 import { ConfidenceScore } from "./confidence-score";
 import { CampaignContextSummary, buildContextItems } from "./campaign-context-summary";
@@ -15,7 +16,7 @@ const VERDICT_LABEL: Record<VerdictReportData["verdict"], string> = {
   dont_launch: "Don't Launch",
 };
 
-function buildSummaryText(report: VerdictReportData, context: CreativeContext): string {
+function buildSummaryText(report: VerdictReportData, context: StoredCreativeContext): string {
   const lines = [
     `Verdict: ${VERDICT_LABEL[report.verdict]} (${report.confidence}% confidence)`,
     "",
@@ -38,7 +39,7 @@ function buildSummaryText(report: VerdictReportData, context: CreativeContext): 
 
 type Props = {
   report: VerdictReportData;
-  context: CreativeContext;
+  context: StoredCreativeContext;
   activeId: string | null;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
