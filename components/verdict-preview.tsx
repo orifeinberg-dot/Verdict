@@ -1,4 +1,5 @@
 import { ConfidenceScore } from "@/components/confidence-score";
+import { AnnotationMarker, AnnotationCornerBrackets } from "@/components/annotation-marker";
 
 const EXAMPLE_STRENGTH = {
   category: "Message clarity",
@@ -30,14 +31,23 @@ export function VerdictPreview() {
           className="relative w-full shrink-0 overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.05] sm:w-32"
           style={{ aspectRatio: "4 / 5" }}
         >
-          <span
-            aria-hidden="true"
-            className="absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-marker-strength shadow-md"
+          {/* Illustrates the selected state — brackets + ring together —
+              alongside a plain unselected marker, so the landing page shows
+              the same visual system as the real report. */}
+          <AnnotationCornerBrackets
+            kind="strength"
+            visible
+            style={{ left: "56%", top: "18%", width: "24%", height: "16%" }}
+          />
+          <AnnotationMarker
+            kind="strength"
+            selected
+            className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: "68%", top: "26%" }}
           />
-          <span
-            aria-hidden="true"
-            className="absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-marker-weakness shadow-md"
+          <AnnotationMarker
+            kind="weakness"
+            className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: "34%", top: "70%" }}
           />
         </div>

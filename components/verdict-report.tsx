@@ -40,12 +40,13 @@ function buildSummaryText(report: VerdictReportData, context: StoredCreativeCont
 type Props = {
   report: VerdictReportData;
   context: StoredCreativeContext;
-  activeId: string | null;
+  hoveredId: string | null;
+  selectedId: string | null;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
 };
 
-export function VerdictReport({ report, context, activeId, onHover, onSelect }: Props) {
+export function VerdictReport({ report, context, hoveredId, selectedId, onHover, onSelect }: Props) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -68,13 +69,15 @@ export function VerdictReport({ report, context, activeId, onHover, onSelect }: 
 
       <StrengthsList
         points={report.strengths}
-        activeId={activeId}
+        hoveredId={hoveredId}
+        selectedId={selectedId}
         onHover={onHover}
         onSelect={onSelect}
       />
       <WeaknessesList
         points={report.weaknesses}
-        activeId={activeId}
+        hoveredId={hoveredId}
+        selectedId={selectedId}
         onHover={onHover}
         onSelect={onSelect}
       />

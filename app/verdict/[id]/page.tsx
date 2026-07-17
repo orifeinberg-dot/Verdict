@@ -44,7 +44,6 @@ export default function VerdictPage() {
   // right.
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const activeId = hoveredId ?? selectedId;
   const imageWrapperRef = useRef<HTMLDivElement>(null);
 
   // Scrolling only ever follows the side the user just interacted with —
@@ -106,7 +105,8 @@ export default function VerdictPage() {
             image={image}
             strengths={report.strengths}
             weaknesses={report.weaknesses}
-            activeId={activeId}
+            hoveredId={hoveredId}
+            selectedId={selectedId}
             onHover={setHoveredId}
             onSelect={selectMarker}
           />
@@ -114,7 +114,8 @@ export default function VerdictPage() {
         <VerdictReport
           report={report}
           context={context}
-          activeId={activeId}
+          hoveredId={hoveredId}
+          selectedId={selectedId}
           onHover={setHoveredId}
           onSelect={selectFinding}
         />

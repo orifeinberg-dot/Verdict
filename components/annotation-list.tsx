@@ -19,7 +19,8 @@ function categoryLabel(category: AnnotationCategory, kind: Kind): string {
 
 type ListProps = {
   points: AnnotatedPoint[];
-  activeId: string | null;
+  hoveredId: string | null;
+  selectedId: string | null;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
 };
@@ -38,7 +39,8 @@ export function AnnotationList({
   description,
   kind,
   points,
-  activeId,
+  hoveredId,
+  selectedId,
   onHover,
   onSelect,
   emptyMessage,
@@ -61,7 +63,7 @@ export function AnnotationList({
                 point={point}
                 kind={kind}
                 dotClass={dotClass}
-                isActive={point.id === activeId}
+                isHighlighted={point.id === hoveredId || point.id === selectedId}
                 onHover={onHover}
                 onSelect={onSelect}
               />
@@ -77,14 +79,14 @@ function Row({
   point,
   kind,
   dotClass,
-  isActive,
+  isHighlighted,
   onHover,
   onSelect,
 }: {
   point: AnnotatedPoint;
   kind: Kind;
   dotClass: string;
-  isActive: boolean;
+  isHighlighted: boolean;
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
 }) {
@@ -106,7 +108,7 @@ function Row({
   );
 
   const baseClass = `flex w-full flex-col gap-1.5 rounded-lg border px-4 py-3 text-left transition-colors ${
-    isActive
+    isHighlighted
       ? "border-foreground/50 bg-foreground/[0.07] shadow-sm"
       : "border-foreground/10"
   }`;
