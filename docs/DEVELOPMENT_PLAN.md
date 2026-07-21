@@ -43,6 +43,24 @@ validates `campaignType` against an explicit allowlist of current and
 legacy values, and `occasion` against the full `Occasion` union — closing
 a validation gap that had been called out here but never implemented.
 
+Milestone 025 (see
+`agents/prompts/025-integrate-deterministic-decision-engine.md`) wired
+the deterministic decision engine (`lib/verdict/decision-engine.ts`) into
+the mock engine's verdict, confidence, anchor, and executive-summary
+generation. Doing so surfaced a validation gap worth tracking here rather
+than fixing ad hoc: `computeVerdict()` treats `Weakness.blocking` as
+already-validated input and does not itself check which category it's set
+on, but only `policy_risk`, `legibility`, and `message_clarity` weaknesses
+are meant to be eligible for `blocking: true`
+(`VERDICT_INTELLIGENCE_FRAMEWORK.md`'s override condition — a
+`brand_consistency` weakness should never be launch-blocking on its own).
+No validation layer enforcing this exists yet, so a `brand_consistency`
+weakness can currently reach `blocking: true` unchecked. The future
+validation layer (`INTELLIGENCE_IMPLEMENTATION_ARCHITECTURE.md` Section 6)
+is expected to reject or coerce any such value to `false` before it
+reaches `decision-engine.ts` — enforcing this is deliberately not
+`decision-engine.ts`'s job.
+
 ## Milestone 1 — Types and mock engine (no UI)
 
 Build the domain model first so the UI has a real contract to render

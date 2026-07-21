@@ -7,11 +7,11 @@ import type {
   CreativeContext,
   CreativeImage,
   Occasion,
-  Verdict,
   VerdictEngine,
   VerdictReport,
   Weakness,
 } from "./types";
+import { assembleExecutiveSummary, computeConfidence, computeVerdict, selectAnchorFinding } from "./decision-engine";
 
 const CATEGORIES: AnnotationCategory[] = [
   "policy_risk",
@@ -296,49 +296,30 @@ function buildPoint(
   };
 }
 
-function determineVerdict(rng: Rng, aspectRatio: number): Verdict {
-  // Extreme aspect ratios nudge toward "test" rather than flipping the
-  // verdict outright — per DEVELOPMENT_PLAN.md's mock-engine guidance.
+// How rich/severe the fabricated findings for this report should be —
+// drives finding counts and the blocking roll below, nothing else. This
+// is NOT the report's verdict: per VERDICT_INTELLIGENCE_FRAMEWORK.md and
+// decision-engine.ts, the verdict is always computed from the resulting
+// findings (computeVerdict), never picked up front. Same thresholds and
+// aspect-ratio branching as before this file's Milestone 025 integration
+// — only the label changed, from a Verdict to this internal-only signal.
+type SeverityRoll = "clean" | "mixed" | "severe";
+
+function rollSeverity(rng: Rng, aspectRatio: number): SeverityRoll {
+  // Extreme aspect ratios nudge toward "mixed" rather than flipping to
+  // "severe" outright — per DEVELOPMENT_PLAN.md's mock-engine guidance.
   const isExtremeAspectRatio = aspectRatio < 0.35 || aspectRatio > 2.2;
   const roll = rng();
 
   if (isExtremeAspectRatio) {
-    if (roll < 0.55) return "test";
-    if (roll < 0.8) return "dont_launch";
-    return "launch";
+    if (roll < 0.55) return "mixed";
+    if (roll < 0.8) return "severe";
+    return "clean";
   }
 
-  if (roll < 0.45) return "launch";
-  if (roll < 0.8) return "test";
-  return "dont_launch";
-}
-
-function confidenceRange(verdict: Verdict): [number, number] {
-  switch (verdict) {
-    case "launch":
-      return [78, 96];
-    case "test":
-      return [55, 80];
-    case "dont_launch":
-      return [60, 92];
-  }
-}
-
-function buildExecutiveSummary(
-  ctx: CreativeContext,
-  verdict: Verdict,
-  topStrength: AnnotatedPoint | undefined,
-  topWeakness: Weakness | undefined,
-): string {
-  const brand = ctx.brandName || "This creative";
-  switch (verdict) {
-    case "launch":
-      return `${brand} is ready to spend against. ${topStrength ? topStrength.summary : "The core message and layout both hold up."} No critical issues found for a ${objectiveLabel(ctx.campaignObjective)} campaign.`;
-    case "test":
-      return `${brand} is workable but not a clean launch yet. ${topWeakness ? topWeakness.summary : "There are a couple of open questions worth resolving first."} Worth an A/B test or a second look before committing full budget.`;
-    case "dont_launch":
-      return `${brand} shouldn't go live as-is. ${topWeakness ? topWeakness.summary : "There's a critical issue — must fix before launch — that likely wastes spend if this runs today."} Fix the flagged issue before this reaches a real audience.`;
-  }
+  if (roll < 0.45) return "clean";
+  if (roll < 0.8) return "mixed";
+  return "severe";
 }
 
 export const mockVerdictEngine: VerdictEngine = {
@@ -348,17 +329,11 @@ export const mockVerdictEngine: VerdictEngine = {
     );
     const rng = mulberry32(seed);
     const aspectRatio = image.width / Math.max(image.height, 1);
-    const verdict = determineVerdict(rng, aspectRatio);
+    const severity = rollSeverity(rng, aspectRatio);
 
-    const [confidenceMin, confidenceMax] = confidenceRange(verdict);
-    let confidence = randomInt(rng, confidenceMin, confidenceMax);
-    if (!context.targetAudience) {
-      confidence = Math.max(30, confidence - randomInt(rng, 4, 9));
-    }
-
-    const strengthCount = verdict === "dont_launch" ? randomInt(rng, 1, 2) : randomInt(rng, 2, 3);
+    const strengthCount = severity === "severe" ? randomInt(rng, 1, 2) : randomInt(rng, 2, 3);
     const weaknessCount =
-      verdict === "launch" ? randomInt(rng, 0, 1) : verdict === "test" ? randomInt(rng, 1, 3) : randomInt(rng, 2, 4);
+      severity === "clean" ? randomInt(rng, 0, 1) : severity === "mixed" ? randomInt(rng, 1, 3) : randomInt(rng, 2, 4);
 
     const strengths: AnnotatedPoint[] = Array.from({ length: strengthCount }, () =>
       buildPoint(rng, pick(rng, CATEGORIES), STRENGTH_TEMPLATES, context, rng() > 0.4),
@@ -366,7 +341,7 @@ export const mockVerdictEngine: VerdictEngine = {
 
     const weaknesses: Weakness[] = Array.from({ length: weaknessCount }, (_, index) => {
       const point = buildPoint(rng, pick(rng, CATEGORIES), WEAKNESS_TEMPLATES, context, rng() > 0.3);
-      const blocking = verdict === "dont_launch" ? index === 0 || rng() > 0.6 : false;
+      const blocking = severity === "severe" ? index === 0 || rng() > 0.6 : false;
       return { ...point, blocking };
     });
 
@@ -393,10 +368,20 @@ export const mockVerdictEngine: VerdictEngine = {
       );
     }
 
+    // Findings are fabricated above; every business decision from here on
+    // — verdict, confidence, which finding anchors the summary, and the
+    // summary itself — is delegated to decision-engine.ts, the single
+    // source of truth for that reasoning (see
+    // INTELLIGENCE_IMPLEMENTATION_ARCHITECTURE.md's evaluation pipeline).
+    const verdict = computeVerdict(weaknesses);
+    const confidence = computeConfidence(strengths, weaknesses, CATEGORIES);
+    const anchor = selectAnchorFinding(verdict, strengths, weaknesses);
+    const executiveSummary = assembleExecutiveSummary(verdict, anchor, context);
+
     return {
       verdict,
-      confidence: Math.min(99, Math.max(1, confidence)),
-      executiveSummary: buildExecutiveSummary(context, verdict, strengths[0], weaknesses[0]),
+      confidence,
+      executiveSummary,
       strengths,
       weaknesses,
       recommendations,
