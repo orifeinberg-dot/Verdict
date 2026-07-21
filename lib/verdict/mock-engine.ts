@@ -12,6 +12,7 @@ import type {
   Weakness,
 } from "./types";
 import { assembleExecutiveSummary, computeConfidence, computeVerdict, selectAnchorFinding } from "./decision-engine";
+import { validateWeaknesses } from "./validation";
 
 const CATEGORIES: AnnotationCategory[] = [
   "policy_risk",
@@ -361,21 +362,29 @@ export const mockVerdictEngine: VerdictEngine = {
       }
     }
 
-    const recommendations = weaknesses.map((weakness) => pick(rng, RECOMMENDATION_TEMPLATES[weakness.category])(context));
+    // Findings are fabricated above; before any decision-engine function
+    // sees them, normalize any weakness whose blocking flag isn't legal
+    // for its category (see validation.ts — this is what lets
+    // computeVerdict() below trust `blocking` at face value).
+    const validatedWeaknesses = validateWeaknesses(weaknesses);
+
+    const recommendations = validatedWeaknesses.map(
+      (weakness) => pick(rng, RECOMMENDATION_TEMPLATES[weakness.category])(context),
+    );
     if (recommendations.length === 0) {
       recommendations.push(
         "No critical issues here — consider a lightweight A/B test against a different headline to see if performance improves further.",
       );
     }
 
-    // Findings are fabricated above; every business decision from here on
-    // — verdict, confidence, which finding anchors the summary, and the
-    // summary itself — is delegated to decision-engine.ts, the single
-    // source of truth for that reasoning (see
-    // INTELLIGENCE_IMPLEMENTATION_ARCHITECTURE.md's evaluation pipeline).
-    const verdict = computeVerdict(weaknesses);
-    const confidence = computeConfidence(strengths, weaknesses, CATEGORIES);
-    const anchor = selectAnchorFinding(verdict, strengths, weaknesses);
+    // Every business decision from here on — verdict, confidence, which
+    // finding anchors the summary, and the summary itself — is delegated
+    // to decision-engine.ts, the single source of truth for that
+    // reasoning (see INTELLIGENCE_IMPLEMENTATION_ARCHITECTURE.md's
+    // evaluation pipeline).
+    const verdict = computeVerdict(validatedWeaknesses);
+    const confidence = computeConfidence(strengths, validatedWeaknesses, CATEGORIES);
+    const anchor = selectAnchorFinding(verdict, strengths, validatedWeaknesses);
     const executiveSummary = assembleExecutiveSummary(verdict, anchor, context);
 
     return {
@@ -383,7 +392,7 @@ export const mockVerdictEngine: VerdictEngine = {
       confidence,
       executiveSummary,
       strengths,
-      weaknesses,
+      weaknesses: validatedWeaknesses,
       recommendations,
     };
   },
