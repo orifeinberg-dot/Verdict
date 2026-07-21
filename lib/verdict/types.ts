@@ -19,6 +19,11 @@ export type AnnotatedPoint = {
   id: string;
   category: AnnotationCategory;
   summary: string;
+  // The concrete, observable fact backing `summary` (e.g. "The CTA button
+  // is positioned below the fold.") — never a recommendation or
+  // conclusion. Required and must be non-empty. See
+  // VERDICT_INTELLIGENCE_FRAMEWORK.md's AI Contract.
+  evidence: string;
   boundingBox?: BoundingBox;
 };
 

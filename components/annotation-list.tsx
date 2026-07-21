@@ -104,6 +104,7 @@ function Row({
         )}
       </div>
       <p className="text-sm text-foreground/80">{point.summary}</p>
+      {point.evidence && <p className="text-xs text-foreground/50">{point.evidence}</p>}
     </>
   );
 
