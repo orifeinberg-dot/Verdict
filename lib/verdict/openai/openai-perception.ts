@@ -3,7 +3,7 @@ import type { PerceptionEngine, PerceptionResult } from "../perception";
 import { buildPerceptionPrompt } from "./prompt";
 import { mapOpenAIResponse } from "./mapper";
 import { PERCEPTION_RESPONSE_JSON_SCHEMA } from "./schema";
-import { openAIClient } from "./client";
+import { openAIClient, type OpenAIImagePayload } from "./client";
 
 /**
  * The first concrete `PerceptionEngine` implementation for OpenAI Vision —
@@ -25,14 +25,19 @@ import { openAIClient } from "./client";
  */
 
 /**
- * Placeholder only. Once a real OpenAI Vision call exists, this will
- * convert `CreativeImage` into whatever multimodal message-content shape
- * the API expects (e.g. a base64 image content part). Not implemented —
- * nothing downstream reads its return value yet.
+ * Placeholder only. Once a real image-conversion pipeline exists, this
+ * will convert `CreativeImage` into an `OpenAIImagePayload` (a data URL
+ * or externally accessible image URL — see `./client.ts`). Converting a
+ * browser-captured image into that shape is out of scope for this
+ * milestone, so this throws rather than fabricating a value that would
+ * misrepresent readiness; `openAIPerceptionEngine` remains inert and
+ * unreferenced by the running application either way.
  */
-function prepareImagePayload(image: CreativeImage): unknown {
+function prepareImagePayload(image: CreativeImage): OpenAIImagePayload {
   void image;
-  return undefined;
+  throw new Error(
+    "openAIPerceptionEngine: converting a CreativeImage into an OpenAIImagePayload is not yet implemented.",
+  );
 }
 
 export const openAIPerceptionEngine: PerceptionEngine = {
