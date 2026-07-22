@@ -2,22 +2,26 @@ import type { CreativeContext, CreativeImage } from "../types";
 import type { PerceptionEngine, PerceptionResult } from "../perception";
 import { buildPerceptionPrompt } from "./prompt";
 import { mapOpenAIResponse } from "./mapper";
-import type { OpenAIPerceptionResponse } from "./schema";
+import { PERCEPTION_RESPONSE_JSON_SCHEMA } from "./schema";
+import { openAIClient } from "./client";
 
 /**
  * The first concrete `PerceptionEngine` implementation for OpenAI Vision —
  * intentionally inert. It exists to give the future integration a runtime
- * shape (`build prompt → prepare image → call provider → map response →
- * PerceptionResult`) before any of that pipeline can actually run. No SDK
- * is installed, no network request is made, and no environment variable
- * is read here — this module is offline by construction.
+ * shape (`build prompt → prepare image → openAIClient.analyzeCreative →
+ * map response → PerceptionResult`) before any of that pipeline can
+ * actually run. No SDK is installed, no network request is made, and no
+ * environment variable is read here — this module is offline by
+ * construction, and stays that way because `./client.ts` (not this file)
+ * is where SDK-specific communication will eventually live.
  *
- * This is also the *only* module allowed to import `./prompt`, `./schema`,
- * and `./mapper` (aside from those files' own unit tests). Every other
- * layer — `perception-provider.ts`, the orchestrator, the UI — depends
- * only on the `PerceptionEngine` interface, never on OpenAI-specific
- * pieces directly. Keeping that import boundary here is what will let a
- * real implementation land later by changing only this file's body.
+ * This is also the *only* module outside this OpenAI subsystem that
+ * should ever need `./prompt`, `./schema`, and `./mapper` — `./client.ts`
+ * knowing about `./schema`'s response shape is expected, since it's part
+ * of the same subsystem, not a different layer (aside from these files'
+ * own unit tests). Every other layer — `perception-provider.ts`, the
+ * orchestrator, the UI — depends only on the `PerceptionEngine` interface,
+ * never on OpenAI-specific pieces directly.
  */
 
 /**
@@ -31,26 +35,15 @@ function prepareImagePayload(image: CreativeImage): unknown {
   return undefined;
 }
 
-/**
- * Stands in for the actual OpenAI API call. Deliberately unimplemented:
- * throws rather than returning a fabricated or empty response, so a
- * caller can never mistake "not built yet" for "the model found nothing."
- */
-async function callOpenAIVisionProvider(prompt: string, imagePayload: unknown): Promise<OpenAIPerceptionResponse> {
-  void prompt;
-  void imagePayload;
-  throw new Error(
-    "openAIPerceptionEngine: the OpenAI provider call is not yet implemented. " +
-      "getPerceptionEngine() (see ../perception-provider.ts) still returns mockPerceptionEngine; " +
-      "this engine is not referenced anywhere in the running application.",
-  );
-}
-
 export const openAIPerceptionEngine: PerceptionEngine = {
   async perceive(image: CreativeImage, context: CreativeContext): Promise<PerceptionResult> {
     const prompt = buildPerceptionPrompt(context);
     const imagePayload = prepareImagePayload(image);
-    const response = await callOpenAIVisionProvider(prompt, imagePayload);
+    const response = await openAIClient.analyzeCreative({
+      prompt,
+      imagePayload,
+      responseSchema: PERCEPTION_RESPONSE_JSON_SCHEMA,
+    });
     return mapOpenAIResponse(response);
   },
 };
