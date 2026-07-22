@@ -1,7 +1,7 @@
 import type { AnnotationCategory, CreativeContext, CreativeImage, VerdictEngine, VerdictReport } from "./types";
 import { assembleExecutiveSummary, computeConfidence, computeVerdict, selectAnchorFinding } from "./decision-engine";
 import { validateWeaknesses } from "./validation";
-import { mockPerceptionEngine } from "./mock-perception";
+import { getPerceptionEngine } from "./perception-provider";
 
 // The mock perception engine always evaluates all four dimensions — this
 // is the coveredDimensions signal computeConfidence needs, not a fact the
@@ -15,7 +15,7 @@ const CATEGORIES: AnnotationCategory[] = [
 
 export const mockVerdictEngine: VerdictEngine = {
   async analyze(image: CreativeImage, context: CreativeContext): Promise<VerdictReport> {
-    const { strengths, weaknesses, recommendations } = await mockPerceptionEngine.perceive(image, context);
+    const { strengths, weaknesses, recommendations } = await getPerceptionEngine().perceive(image, context);
 
     const validatedWeaknesses = validateWeaknesses(weaknesses);
 
